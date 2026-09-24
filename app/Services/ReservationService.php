@@ -44,10 +44,14 @@ class ReservationService
      *
      * @throws ValidationException
      */
-    public function create(User $customer, array $quantities, bool $termsAccepted): Reservation
+    public function create(User $customer, array $quantities, bool $termsAccepted, ?User $createdBy = null): Reservation
     {
         $quantities = array_filter($quantities, fn ($qty) => $qty > 0);
         $maxQty = $this->settings->int(SettingKey::MaxQtyPerItem);
+
+        if (! $customer->isCustomer()) {
+            throw ValidationException::withMessages(['customer' => 'Reservations belong to a customer account.']);
+        }
 
         if (! $termsAccepted) {
             throw ValidationException::withMessages(['terms' => 'Please accept the reservation terms.']);
@@ -64,7 +68,7 @@ class ReservationService
         }
 
         try {
-            return DB::transaction(function () use ($customer, $quantities) {
+            return DB::transaction(function () use ($customer, $quantities, $createdBy) {
                 // Serialises this customer's reservation creation so the unpaid limit cannot be raced.
                 User::query()->whereKey($customer->id)->lockForUpdate()->first();
 
@@ -91,10 +95,11 @@ class ReservationService
                     'balance' => Money::zero(),
                     'expires_at' => now()->addMinutes($this->settings->int(SettingKey::PendingMinutes)),
                     'terms_accepted_at' => now(),
-                    'created_by' => $customer->id,
+                    // Staff may reserve on a customer's behalf; the reservation still belongs to the customer.
+                    'created_by' => ($createdBy ?? $customer)->id,
                 ])->save();
 
-                $this->stock->allocate($reservation, $quantities, $customer);
+                $this->stock->allocate($reservation, $quantities, $createdBy ?? $customer);
 
                 $total = Money::add(...$reservation->lines()->get()->map->lineTotal()->all());
                 $downpayment = Money::percent($total, $this->settings->int(SettingKey::DownpaymentPercent));
