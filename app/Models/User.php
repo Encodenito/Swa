@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Role;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,13 +14,24 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
+     * Mirrors the column default so a freshly created user has a role before it is reloaded.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'role' => 'customer',
+    ];
+
+    /**
+     * The attributes that are mass assignable. `role` is deliberately absent:
+     * it only changes through explicit admin actions.
      *
      * @var list<string>
      */
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
     ];
 
@@ -43,6 +55,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => Role::class,
         ];
+    }
+
+    public function isStaff(): bool
+    {
+        return in_array($this->role, [Role::Staff, Role::Admin], true);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
     }
 }
