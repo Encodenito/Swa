@@ -88,6 +88,7 @@ export interface ItemDetail extends ItemCard {
 /** App\Http\Presenters\ReservationPresenter::summary(). */
 export interface ReservationSummary {
     reference_code: string;
+    type: 'reservation' | 'walk_in';
     status: ReservationStatus;
     status_label: string;
     total: string;
@@ -98,6 +99,7 @@ export interface ReservationSummary {
     created_at: string | null;
     item_count: number | null;
     customer: { name: string; email: string; phone: string | null } | null;
+    walk_in_name: string | null;
 }
 
 export interface ReservationLine {
@@ -112,6 +114,7 @@ export interface ReservationLine {
 
 export interface PaymentRow {
     id: number;
+    parent_id: number | null;
     type: 'downpayment' | 'balance' | 'full' | 'refund';
     amount: string;
     method: 'paymongo' | 'cash';
@@ -119,6 +122,7 @@ export interface PaymentRow {
     created_at: string | null;
     provider_ref: string | null;
     note: string | null;
+    reviewed_at: string | null;
 }
 
 /** App\Http\Presenters\ReservationPresenter::detail(). */
@@ -128,7 +132,14 @@ export interface ReservationDetail extends ReservationSummary {
     completed_at: string | null;
     cancelled_at: string | null;
     cancel_reason: string | null;
+    forfeited_at: string | null;
+    walk_in_phone: string | null;
     can_pay: boolean;
+    /** Staff only, while pending_payment: the PayMongo link to hand to the customer. */
+    checkout_url: string | null;
+    /** What the viewer may do. Display only; the server re-checks. */
+    cancel: { allowed: boolean; percents: number[]; reason_required: boolean };
+    can_void: boolean;
     lines: ReservationLine[];
     payments: PaymentRow[];
 }

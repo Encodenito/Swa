@@ -1,16 +1,22 @@
 import type { NavItem, Role } from '@/types';
 import {
+    ClipboardCheck,
     ClipboardList,
     Cog,
     FolderTree,
     LayoutGrid,
     PackageCheck,
     PackageOpen,
+    Receipt,
     ScanLine,
+    ScrollText,
     ShoppingCart,
     Store,
     Tags,
+    TrendingUp,
     Truck,
+    UserPlus,
+    Users,
     Wrench,
 } from 'lucide-vue-next';
 
@@ -19,6 +25,9 @@ export type Area = 'account' | 'staff' | 'admin';
 const staffItems = (): NavItem[] => [
     { title: 'Reservations', href: route('staff.reservations.index'), icon: ClipboardList },
     { title: 'Pickup counter', href: route('staff.pickup'), icon: ScanLine },
+    { title: 'Walk-in sale', href: route('staff.walk-ins.create'), icon: Receipt },
+    { title: 'Reserve for a customer', href: route('staff.customer-reservations.create'), icon: UserPlus },
+    { title: 'Payments to review', href: route('staff.payments.review'), icon: ClipboardCheck },
     { title: 'Stock Receiving', href: route('staff.deliveries.index'), icon: Truck },
     { title: 'Stock', href: route('staff.stock.index'), icon: PackageOpen },
 ];
@@ -43,6 +52,9 @@ export function navFor(area: Area): NavItem[] {
                 { title: 'Items', href: route('admin.items.index'), icon: PackageCheck },
                 { title: 'Categories', href: route('admin.categories.index'), icon: FolderTree },
                 { title: 'Suppliers', href: route('staff.suppliers.index'), icon: Tags },
+                { title: 'Accounts', href: route('admin.users.index'), icon: Users },
+                { title: 'Reports', href: route('admin.reports'), icon: TrendingUp },
+                { title: 'Audit log', href: route('admin.audit-log'), icon: ScrollText },
                 { title: 'Settings', href: route('admin.settings.edit'), icon: Cog },
             ];
     }
