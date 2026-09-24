@@ -19,6 +19,7 @@ Business rules: skill `swa-business-rules`. PayMongo details: skill `paymongo-in
 ## Conventions
 - Business logic in `app/Services`; thin controllers; Form Requests; Policies on every model access; enums in `app/Enums`.
 - Money is `decimal(10,2)` everywhere; integer centavos only at the PayMongo boundary.
+- MariaDB 10.4 gives the first NOT NULL `timestamp` column an implicit `ON UPDATE CURRENT_TIMESTAMP`. Use `dateTime()` for business dates (a test fails if any column auto-updates).
 - Stock changes only through `stock_movements`. Migrations only, never manual schema edits.
 - Git: local only, branch `phase-N-short-name`, small imperative commits. Never push, never merge phase branches.
 
