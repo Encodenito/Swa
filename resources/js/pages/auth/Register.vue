@@ -11,6 +11,7 @@ import { LoaderCircle } from 'lucide-vue-next';
 const form = useForm({
     name: '',
     email: '',
+    phone: '',
     password: '',
     password_confirmation: '',
 });
@@ -41,12 +42,29 @@ const submit = () => {
                 </div>
 
                 <div class="grid gap-2">
+                    <Label for="phone">Mobile number (optional)</Label>
+                    <Input
+                        id="phone"
+                        type="tel"
+                        inputmode="tel"
+                        tabindex="3"
+                        autocomplete="tel"
+                        maxlength="13"
+                        v-model="form.phone"
+                        placeholder="09171234567"
+                        aria-describedby="phone-hint"
+                    />
+                    <p id="phone-hint" class="text-xs text-muted-foreground">So we can text you about pickup.</p>
+                    <InputError :message="form.errors.phone" />
+                </div>
+
+                <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input
                         id="password"
                         type="password"
                         required
-                        tabindex="3"
+                        tabindex="4"
                         autocomplete="new-password"
                         v-model="form.password"
                         placeholder="Password"
@@ -60,7 +78,7 @@ const submit = () => {
                         id="password_confirmation"
                         type="password"
                         required
-                        tabindex="4"
+                        tabindex="5"
                         autocomplete="new-password"
                         v-model="form.password_confirmation"
                         placeholder="Confirm password"
@@ -68,7 +86,15 @@ const submit = () => {
                     <InputError :message="form.errors.password_confirmation" />
                 </div>
 
-                <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
+                <div class="space-y-1 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                    <p>
+                        We use your name, email and mobile number only to manage your reservations and contact you about pickup. We don't sell or
+                        share your details. See our privacy notice at the shop counter.
+                    </p>
+                    <p>This follows the Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+                </div>
+
+                <Button type="submit" class="w-full" tabindex="6" :disabled="form.processing">
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
                     Create account
                 </Button>
@@ -76,7 +102,7 @@ const submit = () => {
 
             <div class="text-center text-sm text-muted-foreground">
                 Already have an account?
-                <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="6">Log in</TextLink>
+                <TextLink :href="route('login')" class="underline underline-offset-4" :tabindex="7">Log in</TextLink>
             </div>
         </form>
     </AuthBase>
