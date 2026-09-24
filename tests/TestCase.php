@@ -4,6 +4,7 @@ namespace Tests;
 
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 abstract class TestCase extends BaseTestCase
@@ -32,5 +33,8 @@ abstract class TestCase extends BaseTestCase
 
         // Page tests must not depend on a built frontend.
         $this->withoutVite();
+
+        // Tests never reach PayMongo or Resend: any HTTP call not faked with Http::fake() fails.
+        Http::preventStrayRequests();
     }
 }

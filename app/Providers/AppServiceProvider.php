@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        Gate::define('manage-settings', fn (User $user) => $user->isAdmin());
     }
 
     private function configureRateLimiting(): void
@@ -31,5 +35,9 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login-ip', fn (Request $request) => Limit::perMinute(20)->by($request->ip()));
 
         RateLimiter::for('register', fn (Request $request) => Limit::perHour(5)->by($request->ip()));
+
+        RateLimiter::for('reservations', fn (Request $request) => Limit::perMinute(5)->by($request->user()?->id ?: $request->ip()));
+
+        RateLimiter::for('paymongo-webhook', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
     }
 }

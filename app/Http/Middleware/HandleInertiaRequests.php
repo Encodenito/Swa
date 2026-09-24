@@ -40,6 +40,11 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'cartCount' => fn () => $user?->isCustomer() ? array_sum((array) $request->session()->get('cart', [])) : 0,
             'auth' => [
                 // Only what the UI needs; never the full model.
                 'user' => $user ? [

@@ -78,6 +78,18 @@ final class Money
     }
 
     /**
+     * Display format without floats or the intl extension: "1234567.5" -> "₱1,234,567.50".
+     */
+    public static function format(string $amount): string
+    {
+        $value = self::of($amount);
+        $negative = str_starts_with($value, '-');
+        [$whole, $cents] = explode('.', ltrim($value, '-'));
+
+        return ($negative ? '-' : '').'₱'.strrev(implode(',', str_split(strrev($whole), 3))).'.'.$cents;
+    }
+
+    /**
      * Round half away from zero to 2 places.
      */
     private static function round(string $value): string

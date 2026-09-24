@@ -26,6 +26,11 @@
         <env name="DB_DATABASE" value="swa_reservations_test"/>
         <env name="APP_TIMEZONE" value="Asia/Manila"/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="PAYMONGO_SECRET_KEY" value="sk_test_phpunit" force="true"/>
+        <env name="PAYMONGO_PUBLIC_KEY" value="pk_test_phpunit" force="true"/>
+        <env name="PAYMONGO_WEBHOOK_SECRET" value="whsk_test_phpunit" force="true"/>
+        <env name="PAYMONGO_LIVEMODE" value="false" force="true"/>
+        <env name="RESEND_KEY" value="" force="true"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

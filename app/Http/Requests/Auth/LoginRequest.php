@@ -50,6 +50,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()?->deactivated_at !== null) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'This account has been deactivated. Please contact the shop.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
