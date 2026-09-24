@@ -24,7 +24,7 @@ class PickupController extends Controller
     {
         Gate::authorize('viewAny', Reservation::class);
 
-        $search = trim((string) $request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? '');
+        $search = trim((string) ($request->validate(['q' => ['nullable', 'string', 'max:100']])['q'] ?? ''));
 
         $results = $search === '' ? [] : Reservation::query()
             ->with(['user:id,name,email,phone', 'lines.item:id,name,slug', 'payments'])
