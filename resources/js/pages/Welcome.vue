@@ -30,7 +30,12 @@ const page = usePage<SharedData>();
                     >
                         Create an account
                     </Link>
-                    <p class="self-center text-sm text-muted-foreground">The item catalog opens here soon.</p>
+                    <Link
+                        :href="route('items.index')"
+                        class="inline-flex h-11 items-center rounded-md border border-border bg-card px-5 font-semibold hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                        Browse items
+                    </Link>
                 </div>
             </div>
 

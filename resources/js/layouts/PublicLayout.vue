@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import FlashMessages from '@/components/shop/FlashMessages.vue';
 import type { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
+import { ShoppingCart } from 'lucide-vue-next';
 
 const page = usePage<SharedData>();
 </script>
@@ -27,6 +29,25 @@ const page = usePage<SharedData>();
                 </Link>
 
                 <nav aria-label="Main" class="ml-auto flex items-center gap-1 text-sm">
+                    <Link
+                        :href="route('items.index')"
+                        class="hidden h-10 items-center rounded-md px-3 font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex"
+                    >
+                        Items
+                    </Link>
+                    <Link
+                        v-if="page.props.auth.user?.role === 'customer'"
+                        :href="route('account.cart')"
+                        class="relative inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        :aria-label="`Cart, ${page.props.cartCount} items`"
+                    >
+                        <ShoppingCart class="size-5" />
+                        <span
+                            v-if="page.props.cartCount > 0"
+                            class="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-tag px-1 text-xs font-bold tabular-nums text-tag-foreground"
+                            >{{ page.props.cartCount }}</span
+                        >
+                    </Link>
                     <template v-if="page.props.auth.user">
                         <Link
                             :href="route('dashboard')"
@@ -54,6 +75,7 @@ const page = usePage<SharedData>();
         </header>
 
         <main id="main" class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:py-10">
+            <FlashMessages class="mb-4" />
             <slot />
         </main>
 

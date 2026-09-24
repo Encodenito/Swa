@@ -3,6 +3,7 @@ import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
+import FlashMessages from '@/components/shop/FlashMessages.vue';
 import type { Area } from '@/lib/navigation';
 import type { BreadcrumbItemType } from '@/types';
 
@@ -22,6 +23,7 @@ withDefaults(defineProps<Props>(), {
         <AppSidebar :area="area" />
         <AppContent variant="sidebar">
             <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+            <FlashMessages class="px-4 pt-4" />
             <slot />
         </AppContent>
     </AppShell>

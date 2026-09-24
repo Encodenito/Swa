@@ -20,6 +20,8 @@ export interface SharedData {
     [key: string]: unknown;
     name: string;
     auth: Auth;
+    flash: { success: string | null; error: string | null };
+    cartCount: number;
     ziggy: {
         location: string;
         url: string;
@@ -42,3 +44,91 @@ export interface User {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export type ReservationStatus = 'pending_payment' | 'confirmed' | 'processing' | 'completed' | 'cancelled' | 'expired' | 'forfeited' | 'voided';
+
+export interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+/** Laravel LengthAwarePaginator as serialized by Inertia. */
+export interface Paginated<T> {
+    data: T[];
+    links: PaginationLink[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+}
+
+/** App\Http\Presenters\ItemPresenter::card(). Money values are decimal strings like "1234.50". */
+export interface ItemCard {
+    id: number;
+    slug: string;
+    name: string;
+    brand: string | null;
+    model: string | null;
+    category: string | null;
+    image_url: string | null;
+    price: string;
+    current_price: string;
+    clearance: boolean;
+    available: number;
+    low_stock: boolean;
+}
+
+export interface ItemDetail extends ItemCard {
+    sku: string | null;
+    description: string | null;
+}
+
+/** App\Http\Presenters\ReservationPresenter::summary(). */
+export interface ReservationSummary {
+    reference_code: string;
+    status: ReservationStatus;
+    status_label: string;
+    total: string;
+    downpayment_amount: string;
+    balance: string;
+    expires_at: string | null;
+    pickup_by: string | null;
+    created_at: string | null;
+    item_count: number | null;
+    customer: { name: string; email: string; phone: string | null } | null;
+}
+
+export interface ReservationLine {
+    id: number;
+    item_name: string | null;
+    item_slug: string | null;
+    quantity: number;
+    unit_price: string;
+    clearance: boolean;
+    line_total: string;
+}
+
+export interface PaymentRow {
+    id: number;
+    type: 'downpayment' | 'balance' | 'full' | 'refund';
+    amount: string;
+    method: 'paymongo' | 'cash';
+    status: 'paid' | 'needs_review' | 'refund_pending' | 'refunded' | 'refund_failed';
+    created_at: string | null;
+    provider_ref: string | null;
+    note: string | null;
+}
+
+/** App\Http\Presenters\ReservationPresenter::detail(). */
+export interface ReservationDetail extends ReservationSummary {
+    confirmed_at: string | null;
+    processing_at: string | null;
+    completed_at: string | null;
+    cancelled_at: string | null;
+    cancel_reason: string | null;
+    can_pay: boolean;
+    lines: ReservationLine[];
+    payments: PaymentRow[];
+}
