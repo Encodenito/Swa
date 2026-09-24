@@ -75,3 +75,9 @@ If `php artisan test` reports that it is not on a `*_test` database, run `php ar
 - `RESEND_KEY` is only needed when `MAIL_MAILER=resend`.
 
 Later phases add sections on simulating a payment (`php artisan paymongo:simulate-webhook`), a real PayMongo test through a tunnel, verifying a Resend domain, and backups.
+
+## Before going to production
+
+- Never copy `.env.example` as-is: set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true` and a real `APP_URL`.
+- Seed with `php artisan db:seed --class=SettingsSeeder`, not `migrate --seed`. The dev accounts are refused outside `local`/`testing`, but only if `APP_ENV` is set correctly.
+- Create the first admin by hand (Phase 1 documents the command). Customers can't delete their own accounts; an admin deactivates accounts instead (Phase 1).
