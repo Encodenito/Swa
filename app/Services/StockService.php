@@ -183,7 +183,14 @@ class StockService
                 throw new StateConflictException("This batch has only {$locked->quantity_remaining} left.");
             }
 
+            $before = $locked->quantity_remaining;
             $locked->forceFill(['quantity_remaining' => $locked->quantity_remaining + $delta])->save();
+
+            app(AuditLogger::class)->record('stock.adjusted', $locked,
+                ['quantity_remaining' => $before],
+                ['quantity_remaining' => $locked->quantity_remaining, 'type' => $type->value, 'reason' => $reason],
+                $by,
+            );
 
             return $this->record($locked, $type, $delta, by: $by, reason: $reason);
         }, 3);

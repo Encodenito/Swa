@@ -2,8 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Item;
+use App\Models\Payment;
+use App\Models\Reservation;
+use App\Models\Setting;
+use App\Models\StockBatch;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,6 +33,18 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         Gate::define('manage-settings', fn (User $user) => $user->isAdmin());
+        Gate::define('view-audit-log', fn (User $user) => $user->isAdmin());
+        Gate::define('view-reports', fn (User $user) => $user->isAdmin());
+
+        // Short, stable names in audit_logs.subject_type instead of PHP class names.
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'item' => Item::class,
+            'stock_batch' => StockBatch::class,
+            'reservation' => Reservation::class,
+            'payment' => Payment::class,
+            'setting' => Setting::class,
+        ]);
     }
 
     private function configureRateLimiting(): void

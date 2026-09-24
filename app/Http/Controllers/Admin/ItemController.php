@@ -7,8 +7,11 @@ use App\Http\Presenters\ItemPresenter;
 use App\Http\Requests\Admin\ItemRequest;
 use App\Models\Category;
 use App\Models\Item;
+use App\Services\AuditLogger;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -61,13 +64,21 @@ class ItemController extends Controller
         return Inertia::render('Admin/Items/Form', $this->formProps($item));
     }
 
-    public function update(ItemRequest $request, Item $item): RedirectResponse
+    public function update(ItemRequest $request, Item $item, AuditLogger $audit): RedirectResponse
     {
         Gate::authorize('update', $item);
 
         $oldImage = $item->image;
+        $oldPrice = $item->price;
         $item->fill($this->attributes($request));
-        $item->save();
+
+        DB::transaction(function () use ($item, $oldPrice, $audit) {
+            $item->save();
+
+            if (! Money::equals($oldPrice, $item->price)) {
+                $audit->record('item.price_changed', $item, ['price' => $oldPrice], ['price' => $item->price]);
+            }
+        });
 
         if ($request->hasFile('image') && $oldImage) {
             Storage::disk('public')->delete($oldImage);

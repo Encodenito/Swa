@@ -238,14 +238,11 @@ class ReservationService
                 throw ValidationException::withMessages(['pickup_by' => 'The new deadline must be later than the current one.']);
             }
 
-            // Phase 2 moves this into the audit log.
-            Log::info('Pickup deadline extended.', [
-                'reservation' => $locked->reference_code,
-                'from' => $locked->pickup_by?->toIso8601String(),
-                'to' => $deadline->toIso8601String(),
-                'reason' => $reason,
-                'by' => $staff->id,
-            ]);
+            app(AuditLogger::class)->record('reservation.deadline_extended', $locked,
+                ['pickup_by' => $locked->pickup_by?->toIso8601String()],
+                ['pickup_by' => $deadline->toIso8601String(), 'reason' => $reason],
+                $staff,
+            );
 
             $locked->forceFill(['pickup_by' => $deadline])->save();
         }, 3);
