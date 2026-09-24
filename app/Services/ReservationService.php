@@ -20,6 +20,7 @@ use App\Notifications\ReservationProcessing;
 use App\Services\PayMongo\PayMongoException;
 use App\Services\PayMongo\PayMongoService;
 use App\Support\Money;
+use App\Support\ReferenceCode;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -28,8 +29,6 @@ use Throwable;
 
 class ReservationService
 {
-    private const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
     public function __construct(
         private readonly StockService $stock,
         private readonly SettingsService $settings,
@@ -85,7 +84,7 @@ class ReservationService
                 $reservation->forceFill([
                     'user_id' => $customer->id,
                     'type' => ReservationType::Reservation,
-                    'reference_code' => $this->newReferenceCode(),
+                    'reference_code' => ReferenceCode::generate(),
                     'status' => ReservationStatus::PendingPayment,
                     'total' => Money::zero(),
                     'downpayment_amount' => Money::zero(),
@@ -471,18 +470,5 @@ class ReservationService
         $reservation->refresh();
 
         return $payment;
-    }
-
-    private function newReferenceCode(): string
-    {
-        do {
-            $code = 'SWA-';
-
-            for ($i = 0; $i < 8; $i++) {
-                $code .= self::CODE_ALPHABET[random_int(0, strlen(self::CODE_ALPHABET) - 1)];
-            }
-        } while (Reservation::query()->where('reference_code', $code)->exists());
-
-        return $code;
     }
 }

@@ -59,8 +59,9 @@ class StockService
      * All-or-nothing: throws InsufficientStockException and the caller's transaction rolls back.
      *
      * @param  array<int, int>  $quantities  item_id => quantity
+     * @param  MovementType  $as  `reserved` for reservations, `sold` for walk-in sales
      */
-    public function allocate(Reservation $reservation, array $quantities, ?User $by = null): void
+    public function allocate(Reservation $reservation, array $quantities, ?User $by = null, MovementType $as = MovementType::Reserved): void
     {
         $this->assertInTransaction();
         ksort($quantities);
@@ -114,7 +115,7 @@ class StockService
                     'unit_price' => $batch->sale_price ?? $item->price,
                 ])->save();
 
-                $this->record($batch, MovementType::Reserved, -$take, $reservation, $by);
+                $this->record($batch, $as, -$take, $reservation, $by);
             }
         }
     }
@@ -155,6 +156,24 @@ class StockService
             $batch->forceFill(['quantity_remaining' => $batch->quantity_remaining + $line->quantity])->save();
 
             $this->record($batch, MovementType::Released, $line->quantity, $reservation, $by, $reason);
+        }
+    }
+
+    /**
+     * Walk-in void: put every line back into its exact batch as an `adjusted` movement (spec C).
+     */
+    public function returnVoided(Reservation $reservation, string $reason, User $by): void
+    {
+        $this->assertInTransaction();
+
+        $lines = $reservation->lines()->get();
+        Item::query()->whereIn('id', $lines->pluck('item_id')->unique())->orderBy('id')->lockForUpdate()->get();
+        $batches = StockBatch::query()->whereIn('id', $lines->pluck('batch_id')->unique())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+
+        foreach ($lines as $line) {
+            $batch = $batches->get($line->batch_id);
+            $batch->forceFill(['quantity_remaining' => $batch->quantity_remaining + $line->quantity])->save();
+            $this->record($batch, MovementType::Adjusted, $line->quantity, $reservation, $by, $reason);
         }
     }
 
