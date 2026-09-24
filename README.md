@@ -34,7 +34,7 @@ Check the `DB_*` values in `.env`, then migrate and seed:
 php artisan migrate --seed
 ```
 
-Seeding adds the default settings. In the `local` environment it also adds three dev accounts (password `password`):
+Seeding adds the default settings. In the `local` environment it also adds a small demo catalog and three dev accounts (password `password`):
 
 | Email | Role |
 |---|---|
@@ -73,11 +73,53 @@ If `php artisan test` reports that it is not on a `*_test` database, run `php ar
 - Timezone: `Asia/Manila` (`APP_TIMEZONE`). Currency: PHP (₱).
 - PayMongo keys live in `.env` only. Use **test** keys (`sk_test_…`). Never put live keys in this project.
 - `RESEND_KEY` is only needed when `MAIL_MAILER=resend`.
+- PHP `gd` and `intl` are not needed. Item images are validated without GD.
+- Run `php artisan storage:link` once so uploaded item images are served.
 
-Later phases add sections on simulating a payment (`php artisan paymongo:simulate-webhook`), a real PayMongo test through a tunnel, verifying a Resend domain, and backups.
+## Try a reservation locally (simulated payment)
+
+PayMongo cannot reach `localhost`, so a local command sends the same signed webhook PayMongo would.
+
+1. Log in as `customer@swa.test`, open **Browse items**, add something to the cart and open the cart.
+2. Tick the terms box and choose **Pay downpayment**. The app creates a PayMongo **test** checkout (your `sk_test_` key) and sends you to it. You don't need to pay there.
+3. Copy the reference code (`SWA-XXXXXXXX`) from **My reservations**, then run:
+
+   ```bash
+   php artisan paymongo:simulate-webhook SWA-XXXXXXXX
+   ```
+
+   Expected output ends with `200 {"result":"confirmed"}`. The reservation is now **Confirmed** with a pickup deadline.
+   - Run it again with `--payment-id=<the id it printed>` to see duplicate handling (`duplicate`).
+   - Run it with `--amount=1` to see a payment stored for review (`needs_review`).
+4. Unpaid reservations expire after `pending_minutes` (30). Either keep `php artisan schedule:work` running, or wait and run `php artisan reservations:expire`.
+
+The simulator signs with `PAYMONGO_WEBHOOK_SECRET`. Any value works locally, as long as the app and the command read the same `.env`. It refuses to run outside `APP_ENV=local`.
+
+## Real PayMongo test through a tunnel (done by the owner)
+
+This test is manual. The app never starts tunnels or registers webhooks by itself.
+
+1. Start a tunnel to `http://127.0.0.1:8000`, for example `cloudflared tunnel --url http://127.0.0.1:8000` or `ngrok http 8000`. Set `APP_URL` to the https tunnel URL and run `php artisan config:clear`.
+2. In the PayMongo dashboard, switch to **Test mode**, then go to **Developers → Webhooks → Create webhook**:
+   - URL: `https://<tunnel>/webhooks/paymongo`
+   - Events: only `checkout_session.payment.paid`
+3. Copy the webhook's secret key (`whsk_…`) into `PAYMONGO_WEBHOOK_SECRET` in `.env`, then run `php artisan config:clear`.
+4. Reserve an item and pay on PayMongo's test checkout with a test card or test GCash. The return page shows "Confirming your payment…" until the webhook arrives, then the reservation opens as **Confirmed**.
+5. In local mode the first webhook payload is written to `storage/logs/laravel.log`. Check it against the parser if anything looks off.
+6. Afterwards, disable the test webhook in the dashboard and set `APP_URL` back.
+
+## First admin account (non-local environments)
+
+```bash
+php artisan swa:create-admin owner@example.com --name="Shop Owner"
+```
+
+It prompts for a password. Run it on an existing email to promote that account to admin.
+
+Later phases add sections on verifying a Resend domain and backups.
 
 ## Before going to production
 
 - Never copy `.env.example` as-is: set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true` and a real `APP_URL`.
 - Seed with `php artisan db:seed --class=SettingsSeeder`, not `migrate --seed`. The dev accounts are refused outside `local`/`testing`, but only if `APP_ENV` is set correctly.
-- Create the first admin by hand (Phase 1 documents the command). Customers can't delete their own accounts; an admin deactivates accounts instead (Phase 1).
+- Create the first admin with `php artisan swa:create-admin`. Customers cannot delete their own accounts; an admin deactivates them instead.
