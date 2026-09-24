@@ -30,6 +30,9 @@ return [
 
     'payment_method_types' => ['gcash', 'card'],
 
+    // Hosts a checkout_url may point to before a customer is redirected there.
+    'checkout_hosts' => ['checkout.paymongo.com'],
+
     // Seconds for each HTTP call to PayMongo.
     'timeout' => 15,
 

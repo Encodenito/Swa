@@ -38,6 +38,9 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('reservations', fn (Request $request) => Limit::perMinute(5)->by($request->user()?->id ?: $request->ip()));
 
+        // Browsing and account pages (catalog search, cart edits, the payment status poll).
+        RateLimiter::for('browse', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
+
         RateLimiter::for('paymongo-webhook', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
     }
 }

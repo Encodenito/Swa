@@ -17,8 +17,15 @@ class PayMongoWebhookController extends Controller
     {
         // Verify the signature on the raw bytes before anything is parsed.
         $raw = $request->getContent();
+        $signature = WebhookSignature::fromConfig();
 
-        if (! WebhookSignature::fromConfig()->isValid($request->header('Paymongo-Signature'), $raw)) {
+        if (! $signature->hasUsableSecret()) {
+            Log::critical('PayMongo webhook rejected: PAYMONGO_WEBHOOK_SECRET is missing or still the placeholder.');
+
+            return response()->json(['message' => 'Webhook not configured.'], 400);
+        }
+
+        if (! $signature->isValid($request->header('Paymongo-Signature'), $raw)) {
             return response()->json(['message' => 'Invalid signature.'], 400);
         }
 

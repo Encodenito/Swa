@@ -27,7 +27,7 @@ class ItemController extends Controller
             ->withTrashed()
             ->withAvailable()
             ->with('category:id,name')
-            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")))
+            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w->where('name', 'like', like_pattern($search))->orWhere('sku', 'like', like_pattern($search))))
             ->orderBy('name')
             ->paginate(30)
             ->withQueryString()

@@ -53,6 +53,13 @@ class PayMongoService
             throw new PayMongoException('PayMongo returned a checkout session without an id or URL.');
         }
 
+        // Customers are redirected here, so only PayMongo's own hosted checkout is accepted.
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        if (parse_url($url, PHP_URL_SCHEME) !== 'https' || ! in_array($host, config('paymongo.checkout_hosts'), true)) {
+            throw new PayMongoException('PayMongo returned an unexpected checkout URL.', 'unexpected_checkout_url');
+        }
+
         return ['id' => $id, 'checkout_url' => $url];
     }
 

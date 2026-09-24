@@ -33,8 +33,8 @@ class ReservationController extends Controller
             ->with(['user:id,name,email,phone', 'lines:id,reservation_id,quantity'])
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
-                ->where('reference_code', 'like', "%{$search}%")
-                ->orWhereHas('user', fn ($u) => $u->where('email', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%"))))
+                ->where('reference_code', 'like', like_pattern($search))
+                ->orWhereHas('user', fn ($u) => $u->where('email', 'like', like_pattern($search))->orWhere('phone', 'like', like_pattern($search))->orWhere('name', 'like', like_pattern($search)))))
             ->latest()
             ->paginate(20)
             ->withQueryString()

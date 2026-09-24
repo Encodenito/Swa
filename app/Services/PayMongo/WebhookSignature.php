@@ -23,9 +23,24 @@ class WebhookSignature
         );
     }
 
+    /**
+     * A real PayMongo secret starts with whsk_ and is not the .env.example placeholder. The
+     * placeholder is tolerated only in the local environment, for paymongo:simulate-webhook.
+     */
+    public function hasUsableSecret(): bool
+    {
+        if (! str_starts_with($this->secret, 'whsk_') || strlen($this->secret) <= 5) {
+            return false;
+        }
+
+        return $this->secret !== self::PLACEHOLDER || app()->environment('local');
+    }
+
+    public const PLACEHOLDER = 'whsk_xxx';
+
     public function isValid(?string $header, string $rawBody, ?int $now = null): bool
     {
-        if ($this->secret === '' || $header === null || $header === '') {
+        if (! $this->hasUsableSecret() || $header === null || $header === '') {
             return false;
         }
 

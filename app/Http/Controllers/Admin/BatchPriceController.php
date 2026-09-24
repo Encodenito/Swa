@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\BatchPriceRequest;
 use App\Models\StockBatch;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -13,15 +13,11 @@ use Illuminate\Support\Facades\Gate;
  */
 class BatchPriceController extends Controller
 {
-    public function update(Request $request, StockBatch $batch): RedirectResponse
+    public function update(BatchPriceRequest $request, StockBatch $batch): RedirectResponse
     {
         Gate::authorize('updatePrice', $batch);
 
-        $data = $request->validate([
-            'sale_price' => ['nullable', 'regex:/^\d{1,8}(\.\d{1,2})?$/', 'not_regex:/^0+(\.0+)?$/'],
-        ]);
-
-        $batch->update(['sale_price' => $data['sale_price'] ?? null]);
+        $batch->update(['sale_price' => $request->validated('sale_price')]);
 
         return back(303)->with('success', $batch->sale_price ? 'Clearance price set.' : 'Clearance price removed.');
     }

@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\SupplierRequest;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,33 +22,21 @@ class SupplierController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(SupplierRequest $request): RedirectResponse
     {
         Gate::authorize('create', Supplier::class);
 
-        Supplier::create($this->validated($request));
+        Supplier::create($request->validated());
 
         return back(303)->with('success', 'Supplier added.');
     }
 
-    public function update(Request $request, Supplier $supplier): RedirectResponse
+    public function update(SupplierRequest $request, Supplier $supplier): RedirectResponse
     {
         Gate::authorize('update', $supplier);
 
-        $supplier->update($this->validated($request, $supplier));
+        $supplier->update($request->validated());
 
         return back(303)->with('success', 'Supplier updated.');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function validated(Request $request, ?Supplier $supplier = null): array
-    {
-        return $request->validate([
-            'name' => ['required', 'string', 'max:150', Rule::unique('suppliers', 'name')->ignore($supplier)],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'email' => ['nullable', 'email', 'max:255'],
-        ]);
     }
 }

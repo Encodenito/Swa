@@ -29,9 +29,9 @@ class CatalogController extends Controller
             ->withAvailable()
             ->with('category:id,name,slug')
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
-                ->where('name', 'like', "%{$search}%")
-                ->orWhere('brand', 'like', "%{$search}%")
-                ->orWhere('model', 'like', "%{$search}%")))
+                ->where('name', 'like', like_pattern($search))
+                ->orWhere('brand', 'like', like_pattern($search))
+                ->orWhere('model', 'like', like_pattern($search))))
             ->when($category, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $category)))
             ->orderBy('name')
             ->paginate(24)

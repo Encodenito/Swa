@@ -60,7 +60,9 @@ class ConfirmPaymentService
 
         $amount = Money::fromCentavos($event->amountCentavos);
         $expected = Money::equals($amount, $reservation->downpayment_amount);
-        $confirmable = $reservation->status === ReservationStatus::PendingPayment && $expected;
+        // The paid session must be the one this app created for the reservation (when it has one).
+        $sessionMatches = $reservation->paymongo_checkout_id === null || $event->checkoutId === $reservation->paymongo_checkout_id;
+        $confirmable = $reservation->status === ReservationStatus::PendingPayment && $expected && $sessionMatches;
 
         $payment = new Payment;
         $payment->forceFill([
@@ -70,7 +72,7 @@ class ConfirmPaymentService
             'method' => PaymentMethod::PayMongo,
             'provider_ref' => $event->paymentId,
             'status' => $confirmable ? PaymentStatus::Paid : PaymentStatus::NeedsReview,
-            'note' => $confirmable ? null : $this->reviewReason($reservation, $expected),
+            'note' => $confirmable ? null : $this->reviewReason($reservation, $expected, $sessionMatches),
         ])->save();
 
         if (! $confirmable) {
@@ -88,10 +90,12 @@ class ConfirmPaymentService
         return self::CONFIRMED;
     }
 
-    private function reviewReason(Reservation $reservation, bool $amountMatches): string
+    private function reviewReason(Reservation $reservation, bool $amountMatches, bool $sessionMatches): string
     {
-        return $amountMatches
-            ? "Payment arrived while the reservation was {$reservation->status->value}."
-            : "Amount paid differs from the downpayment of {$reservation->downpayment_amount}.";
+        return match (true) {
+            ! $sessionMatches => 'Paid through a checkout session this reservation did not create.',
+            ! $amountMatches => "Amount paid differs from the downpayment of {$reservation->downpayment_amount}.",
+            default => "Payment arrived while the reservation was {$reservation->status->value}.",
+        };
     }
 }

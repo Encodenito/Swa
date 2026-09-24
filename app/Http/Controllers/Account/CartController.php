@@ -40,7 +40,10 @@ class CartController extends Controller
 
     public function update(UpdateCartRequest $request, CartService $cart): RedirectResponse
     {
-        $item = Item::query()->findOrFail($request->integer('item_id'));
+        // Inactive items may only be removed (quantity 0), never increased.
+        $item = Item::query()
+            ->when($request->integer('quantity') > 0, fn ($q) => $q->where('active', true))
+            ->findOrFail($request->integer('item_id'));
         $cart->set($item, $request->integer('quantity'));
 
         return back(303);

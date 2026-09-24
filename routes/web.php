@@ -13,7 +13,6 @@ use App\Http\Controllers\Staff\DeliveryController;
 use App\Http\Controllers\Staff\PickupController;
 use App\Http\Controllers\Staff\ReservationController as StaffReservationController;
 use App\Http\Controllers\Staff\StockController;
-use App\Http\Controllers\Webhooks\PayMongoWebhookController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -25,20 +24,17 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::get('items', [CatalogController::class, 'index'])->name('items.index');
-Route::get('items/{item:slug}', [CatalogController::class, 'show'])->name('items.show');
-
-// PayMongo webhook: public, CSRF-exempt (bootstrap/app.php), authenticated by HMAC signature.
-Route::post('webhooks/paymongo', PayMongoWebhookController::class)
-    ->middleware('throttle:paymongo-webhook')
-    ->name('webhooks.paymongo');
+Route::middleware('throttle:browse')->group(function () {
+    Route::get('items', [CatalogController::class, 'index'])->name('items.index');
+    Route::get('items/{item:slug}', [CatalogController::class, 'show'])->name('items.show');
+});
 
 // Post-login landing: send each role to its own area.
 Route::get('dashboard', function (Request $request) {
     return redirect()->route($request->user()->role->homeRoute());
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth', 'verified', 'role:customer'])
+Route::middleware(['auth', 'verified', 'role:customer', 'throttle:browse'])
     ->prefix('account')->name('account.')
     ->group(function () {
         Route::get('/', [AccountReservationController::class, 'index'])->name('home');
