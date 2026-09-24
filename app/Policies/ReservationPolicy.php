@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ReservationType;
 use App\Enums\Role;
 use App\Models\Reservation;
 use App\Models\User;
@@ -39,5 +40,35 @@ class ReservationPolicy
     public function complete(User $user, Reservation $reservation): bool
     {
         return $user->isStaff();
+    }
+
+    /**
+     * Coarse check; the exact statuses and refund percentages are enforced in ReservationService::cancel.
+     */
+    public function cancel(User $user, Reservation $reservation): bool
+    {
+        if ($reservation->type !== ReservationType::Reservation) {
+            return false;
+        }
+
+        return $user->isStaff() || ($user->role === Role::Customer && $reservation->user_id === $user->id);
+    }
+
+    /**
+     * Staff reserve on behalf of a customer (spec B).
+     */
+    public function createForCustomer(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
+    public function sellWalkIn(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
+    public function void(User $user, Reservation $reservation): bool
+    {
+        return $user->isAdmin() && $reservation->type === ReservationType::WalkIn;
     }
 }

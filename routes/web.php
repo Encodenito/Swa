@@ -3,16 +3,22 @@
 use App\Enums\SettingKey;
 use App\Http\Controllers\Account\CartController;
 use App\Http\Controllers\Account\ReservationController as AccountReservationController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BatchPriceController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ItemController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\Staff\CustomerReservationController;
 use App\Http\Controllers\Staff\DeliveryController;
+use App\Http\Controllers\Staff\PaymentReviewController;
 use App\Http\Controllers\Staff\PickupController;
 use App\Http\Controllers\Staff\ReservationController as StaffReservationController;
 use App\Http\Controllers\Staff\StockController;
+use App\Http\Controllers\Staff\WalkInController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -48,6 +54,7 @@ Route::middleware(['auth', 'verified', 'role:customer', 'throttle:browse'])
             ->name('reservations.store');
         Route::get('reservations/{reservation}', [AccountReservationController::class, 'show'])->name('reservations.show');
         Route::post('reservations/{reservation}/pay', [AccountReservationController::class, 'pay'])->name('reservations.pay');
+        Route::post('reservations/{reservation}/cancel', [AccountReservationController::class, 'cancel'])->name('reservations.cancel');
         Route::get('reservations/{reservation}/return', [AccountReservationController::class, 'return'])->name('reservations.return');
         Route::get('reservations/{reservation}/status', [AccountReservationController::class, 'status'])->name('reservations.status');
     });
@@ -61,6 +68,20 @@ Route::middleware(['auth', 'verified', 'role:staff,admin'])
         Route::get('reservations/{reservation}', [StaffReservationController::class, 'show'])->name('reservations.show');
         Route::post('reservations/{reservation}/process', [StaffReservationController::class, 'process'])->name('reservations.process');
         Route::post('reservations/{reservation}/extend', [StaffReservationController::class, 'extend'])->name('reservations.extend');
+        Route::post('reservations/{reservation}/cancel', [StaffReservationController::class, 'cancel'])->name('reservations.cancel');
+
+        Route::get('customer-reservations/create', [CustomerReservationController::class, 'create'])->name('customer-reservations.create');
+        Route::post('customer-reservations', [CustomerReservationController::class, 'store'])
+            ->middleware('throttle:reservations')
+            ->name('customer-reservations.store');
+
+        Route::get('walk-ins/create', [WalkInController::class, 'create'])->name('walk-ins.create');
+        Route::post('walk-ins', [WalkInController::class, 'store'])->name('walk-ins.store');
+        Route::get('walk-ins/{reservation}', [WalkInController::class, 'show'])->name('walk-ins.show');
+
+        Route::get('payments/review', [PaymentReviewController::class, 'index'])->name('payments.review');
+        Route::post('payments/{payment}/refund', [PaymentReviewController::class, 'refund'])->name('payments.refund');
+        Route::post('payments/{payment}/retry', [PaymentReviewController::class, 'retry'])->name('payments.retry');
 
         Route::get('pickup', [PickupController::class, 'index'])->name('pickup');
         Route::post('pickup/{reservation}', [PickupController::class, 'complete'])->name('pickup.complete');
@@ -100,6 +121,18 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
 
         Route::put('batches/{batch}/price', [BatchPriceController::class, 'update'])->name('batches.price');
+
+        Route::post('walk-ins/{reservation}/void', [WalkInController::class, 'void'])->name('walk-ins.void');
+        Route::post('payments/{payment}/reviewed', [PaymentReviewController::class, 'markReviewed'])->name('payments.reviewed');
+
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::put('users/{user}/role', [UserController::class, 'role'])->name('users.role');
+        Route::post('users/{user}/deactivate', [UserController::class, 'deactivate'])->name('users.deactivate');
+        Route::post('users/{user}/reactivate', [UserController::class, 'reactivate'])->name('users.reactivate');
+
+        Route::get('reports', [ReportController::class, 'index'])->name('reports');
+        Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log');
 
         Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');

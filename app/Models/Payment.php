@@ -29,6 +29,7 @@ class Payment extends Model
             'status' => PaymentStatus::class,
             'method' => PaymentMethod::class,
             'amount' => 'decimal:2',
+            'reviewed_at' => 'datetime',
         ];
     }
 

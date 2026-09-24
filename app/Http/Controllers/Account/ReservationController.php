@@ -11,6 +11,7 @@ use App\Services\CartService;
 use App\Services\PayMongo\PayMongoException;
 use App\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -62,6 +63,20 @@ class ReservationController extends Controller
         return Inertia::render('Account/Reservations/Show', [
             'reservation' => ReservationPresenter::detail($reservation, $request->user()),
         ]);
+    }
+
+    /**
+     * Customer cancel: before Processing only, always a full refund of what was paid (spec D).
+     */
+    public function cancel(Request $request, Reservation $reservation, ReservationService $service): RedirectResponse
+    {
+        Gate::authorize('cancel', $reservation);
+
+        $refund = $service->cancel($reservation, $request->user(), 100, 'Cancelled by the customer');
+
+        return redirect()->route('account.reservations.show', $reservation)->with('success', $refund
+            ? 'Reservation cancelled. Your downpayment is being refunded to your original payment method.'
+            : 'Reservation cancelled.');
     }
 
     /**

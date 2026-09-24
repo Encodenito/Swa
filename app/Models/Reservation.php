@@ -37,6 +37,7 @@ class Reservation extends Model
             'balance' => 'decimal:2',
             'expires_at' => 'datetime',
             'pickup_by' => 'datetime',
+            'reminded_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'confirmed_at' => 'datetime',
             'processing_at' => 'datetime',

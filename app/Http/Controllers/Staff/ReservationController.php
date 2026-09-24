@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Staff;
 
 use App\Enums\ReservationStatus;
+use App\Enums\ReservationType;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\ReservationPresenter;
+use App\Http\Requests\Staff\CancelReservationRequest;
 use App\Http\Requests\Staff\ExtendDeadlineRequest;
 use App\Models\Reservation;
 use App\Services\ReservationService;
+use App\Support\Money;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -24,6 +27,7 @@ class ReservationController extends Controller
 
         $filters = $request->validate([
             'status' => ['nullable', Rule::enum(ReservationStatus::class)],
+            'type' => ['nullable', Rule::enum(ReservationType::class)],
             'q' => ['nullable', 'string', 'max:100'],
         ]);
 
@@ -32,6 +36,7 @@ class ReservationController extends Controller
         $reservations = Reservation::query()
             ->with(['user:id,name,email,phone', 'lines:id,reservation_id,quantity'])
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+            ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('reference_code', 'like', like_pattern($search))
                 ->orWhereHas('user', fn ($u) => $u->where('email', 'like', like_pattern($search))->orWhere('phone', 'like', like_pattern($search))->orWhere('name', 'like', like_pattern($search)))))
@@ -42,7 +47,7 @@ class ReservationController extends Controller
 
         return Inertia::render('Staff/Reservations/Index', [
             'reservations' => $reservations,
-            'filters' => ['status' => $filters['status'] ?? null, 'q' => $search],
+            'filters' => ['status' => $filters['status'] ?? null, 'type' => $filters['type'] ?? null, 'q' => $search],
             'statuses' => collect(ReservationStatus::cases())->map(fn ($s) => ['value' => $s->value, 'label' => $s->label()]),
         ]);
     }
@@ -77,5 +82,19 @@ class ReservationController extends Controller
         $service->extendDeadline($reservation, Carbon::parse($request->validated('pickup_by')), $request->validated('reason'), $request->user());
 
         return back(303)->with('success', 'Pickup deadline extended to '.$reservation->pickup_by->format('M j, Y').'.');
+    }
+
+    /**
+     * Staff (0% refund) or admin (0, 50 or 100%) cancel with a required reason.
+     */
+    public function cancel(CancelReservationRequest $request, Reservation $reservation, ReservationService $service): RedirectResponse
+    {
+        Gate::authorize('cancel', $reservation);
+
+        $refund = $service->cancel($reservation, $request->user(), (int) $request->validated('refund_percent'), $request->validated('reason'));
+
+        return back(303)->with('success', $refund
+            ? 'Reservation cancelled. A refund of '.Money::format($refund->amount).' was sent to PayMongo.'
+            : 'Reservation cancelled without a refund.');
     }
 }
