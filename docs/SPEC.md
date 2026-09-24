@@ -193,3 +193,13 @@ UI: mobile-first (customers will mostly use phones), Tailwind, Vue 3 `<script se
 | 2026-09-24 | Resend key env var is `RESEND_KEY` | It is the name `config/services.php` reads (spec allows either). |
 | 2026-09-24 | Self-service account deletion removed | Hard-deleting users would break reservation/payment history and the audit trail (K.13), and could lock out the only admin. Admin deactivation comes in Phase 1. |
 | 2026-09-24 | Rate limits: registration 5/hour per IP, login 20/min per IP (plus the kit's 5 per email+IP), password change and confirm 6/min | K.10; from the Phase 0 security review. |
+| 2026-09-25 | Webhook confirmation runs inline (one short transaction); only notifications will be queued | The brief allows queueing "heavy work"; confirming is not heavy and inline keeps the return page fast. |
+| 2026-09-25 | A paid webhook is stored as `needs_review` (status unchanged) when the amount differs from the downpayment, or when the paid checkout session is not the one the app created | Extends section D's late-payment rule to other mismatches; staff resolve manually. |
+| 2026-09-25 | An unreadable `checkout_session.payment.paid` event gets 422 (PayMongo retries); other event types get 200 | A paid event must never be dropped silently. |
+| 2026-09-25 | After expiring a reservation, its PayMongo checkout session is closed (best effort, after commit) | Makes a late payment unlikely. |
+| 2026-09-25 | `PAYMONGO_WEBHOOK_SECRET` must start with `whsk_`; the `.env.example` placeholder is accepted only when `APP_ENV=local` | Security review: the public placeholder must never verify a webhook in production. |
+| 2026-09-25 | Customers are redirected only to `https://checkout.paymongo.com` URLs | Security review: no open redirect through a bad PayMongo response. |
+| 2026-09-25 | Staff reserving on a customer's behalf is deferred to Phase 2 | It belongs with staff cancel, refund and the audit log. Admins reserve with a customer account for now. |
+| 2026-09-25 | Pickup requires a staff tick-box "I checked this is the account holder (and their ID for high-value items)" | Spec M: only the account holder collects. |
+| 2026-09-25 | `stock_batches.received_at` is `DATETIME`, not `TIMESTAMP` | MariaDB 10.4 silently adds ON UPDATE CURRENT_TIMESTAMP to the first NOT NULL timestamp; a test now fails if any column auto-updates. |
+| 2026-09-25 | Price, clearance and stock-adjustment changes are not audit-logged until the Phase 2 `audit_logs` table; deadline extensions are written to the application log meanwhile | Section K.13 is completed in Phase 2. |
