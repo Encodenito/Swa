@@ -64,6 +64,34 @@ class PayMongoService
     }
 
     /**
+     * Refund part or all of a paid PayMongo payment. Returns PayMongo's refund id.
+     * PayMongo keeps its fee; the minimum is 100 centavos; a started refund cannot be cancelled.
+     *
+     * @throws PayMongoException with the PayMongo error code (e.g. available_balance_insufficient)
+     */
+    public function createRefund(string $paymentId, int $amountCentavos, string $notes): string
+    {
+        $response = $this->send(fn () => $this->client()->post(config('paymongo.refunds_path'), [
+            'data' => [
+                'attributes' => [
+                    'amount' => $amountCentavos,
+                    'payment_id' => $paymentId,
+                    'reason' => 'others',
+                    'notes' => mb_substr($notes, 0, 255),
+                ],
+            ],
+        ]));
+
+        $id = data_get($response, 'data.id');
+
+        if (! is_string($id)) {
+            throw new PayMongoException('PayMongo returned a refund without an id.', 'invalid_response');
+        }
+
+        return $id;
+    }
+
+    /**
      * Best effort: close an unpaid session so the customer cannot pay after the reservation expired.
      */
     public function expireCheckout(string $checkoutId): void

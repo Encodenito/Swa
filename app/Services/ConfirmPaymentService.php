@@ -9,6 +9,7 @@ use App\Enums\ReservationStatus;
 use App\Enums\SettingKey;
 use App\Models\Payment;
 use App\Models\Reservation;
+use App\Notifications\ReservationConfirmed;
 use App\Services\PayMongo\PaidCheckoutEvent;
 use App\Support\Money;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -33,11 +34,19 @@ class ConfirmPaymentService
     public function handlePaid(PaidCheckoutEvent $event): string
     {
         try {
-            return DB::transaction(fn () => $this->record($event), 3);
+            $result = DB::transaction(fn () => $this->record($event), 3);
         } catch (UniqueConstraintViolationException) {
             // A concurrent delivery of the same event inserted the payment first.
             return self::DUPLICATE;
         }
+
+        // Email only when this delivery really confirmed the reservation (not on duplicates or review).
+        if ($result === self::CONFIRMED) {
+            $reservation = Reservation::query()->with('user')->where('reference_code', $event->referenceNumber)->first();
+            $reservation?->user?->notify(new ReservationConfirmed($reservation));
+        }
+
+        return $result;
     }
 
     private function record(PaidCheckoutEvent $event): string

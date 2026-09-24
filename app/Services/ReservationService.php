@@ -13,6 +13,10 @@ use App\Exceptions\StateConflictException;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\User;
+use App\Notifications\PickupReminder;
+use App\Notifications\ReservationCancelled;
+use App\Notifications\ReservationForfeited;
+use App\Notifications\ReservationProcessing;
 use App\Services\PayMongo\PayMongoException;
 use App\Services\PayMongo\PayMongoService;
 use App\Support\Money;
@@ -30,6 +34,8 @@ class ReservationService
         private readonly StockService $stock,
         private readonly SettingsService $settings,
         private readonly PayMongoService $payMongo,
+        private readonly RefundService $refunds,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -218,6 +224,180 @@ class ReservationService
         }
 
         $reservation->refresh();
+
+        // Only after the update really happened (spec C).
+        $reservation->user?->notify(new ReservationProcessing($reservation));
+    }
+
+    /**
+     * Statuses each role may cancel from, and the refund percentages it may choose (spec B, C, D).
+     *
+     * @return array{statuses: list<ReservationStatus>, percents: list<int>}
+     */
+    public static function cancelRules(User $by, Reservation $reservation): array
+    {
+        if ($by->isAdmin()) {
+            return ['statuses' => [ReservationStatus::PendingPayment, ReservationStatus::Confirmed, ReservationStatus::Processing], 'percents' => [0, 50, 100]];
+        }
+
+        if ($by->isStaff()) {
+            return ['statuses' => [ReservationStatus::PendingPayment, ReservationStatus::Confirmed, ReservationStatus::Processing], 'percents' => [0]];
+        }
+
+        // Customers: their own reservation, only before Processing, always a full refund.
+        return $reservation->user_id === $by->id
+            ? ['statuses' => [ReservationStatus::PendingPayment, ReservationStatus::Confirmed], 'percents' => [100]]
+            : ['statuses' => [], 'percents' => []];
+    }
+
+    /**
+     * Cancel a reservation: lock, re-check the status for this actor, return the stock to its
+     * batches and queue the refund, all in one transaction. The refund HTTP call and the email
+     * happen after commit.
+     *
+     * @throws StateConflictException|ValidationException
+     */
+    public function cancel(Reservation $reservation, User $by, int $refundPercent, ?string $reason): ?Payment
+    {
+        [$locked, $refund] = DB::transaction(function () use ($reservation, $by, $refundPercent, $reason) {
+            $locked = Reservation::query()->whereKey($reservation->id)->lockForUpdate()->firstOrFail();
+            $rules = self::cancelRules($by, $locked);
+
+            if ($locked->type !== ReservationType::Reservation || ! in_array($locked->status, $rules['statuses'], true)) {
+                throw new StateConflictException($locked->status === ReservationStatus::Processing && $by->isCustomer()
+                    ? 'We have already started preparing this order, so it can no longer be cancelled online.'
+                    : 'This reservation can no longer be cancelled (status: '.$locked->status->label().').');
+            }
+
+            if (! in_array($refundPercent, $rules['percents'], true)) {
+                throw ValidationException::withMessages(['refund_percent' => 'You cannot choose that refund percentage.']);
+            }
+
+            $before = ['status' => $locked->status->value];
+            $locked->forceFill([
+                'status' => ReservationStatus::Cancelled,
+                'cancelled_at' => now(),
+                'cancelled_by' => $by->id,
+                'cancel_reason' => $reason,
+            ])->save();
+
+            $this->stock->release($locked, $by, 'Cancelled');
+            $refund = $this->refundDownpayment($locked, $refundPercent, "Cancelled ({$refundPercent}% refund)", $by);
+
+            $this->audit->record('reservation.cancelled', $locked, $before, [
+                'status' => 'cancelled',
+                'refund_percent' => $refundPercent,
+                'refund_amount' => $refund?->amount,
+                'reason' => $reason,
+            ], $by);
+
+            return [$locked, $refund];
+        }, 3);
+
+        $reservation->refresh();
+        $locked->user?->notify(new ReservationCancelled($locked, $refund));
+
+        return $refund;
+    }
+
+    /**
+     * confirmed/processing -> forfeited for every reservation past its pickup deadline.
+     * Refunds forfeit_refund_percent of the downpayment; the shop keeps the rest.
+     */
+    public function forfeitDue(): int
+    {
+        $ids = Reservation::query()
+            ->whereIn('status', ReservationStatus::awaitingPickup())
+            ->where('pickup_by', '<', now())
+            ->orderBy('id')
+            ->pluck('id');
+
+        $count = 0;
+
+        foreach ($ids as $id) {
+            $percent = $this->settings->int(SettingKey::ForfeitRefundPercent);
+
+            $result = DB::transaction(function () use ($id, $percent) {
+                $locked = Reservation::query()->whereKey($id)->lockForUpdate()->first();
+
+                if (! $locked || ! in_array($locked->status, ReservationStatus::awaitingPickup(), true) || $locked->pickup_by?->isFuture()) {
+                    return null;
+                }
+
+                $before = ['status' => $locked->status->value];
+                $locked->forceFill(['status' => ReservationStatus::Forfeited, 'forfeited_at' => now()])->save();
+                $this->stock->release($locked, null, 'Pickup deadline missed');
+                $refund = $this->refundDownpayment($locked, $percent, "Pickup deadline missed ({$percent}% refund)", null);
+
+                $this->audit->record('reservation.forfeited', $locked, $before, [
+                    'status' => 'forfeited',
+                    'refund_percent' => $percent,
+                    'refund_amount' => $refund?->amount,
+                ]);
+
+                return [$locked, $refund];
+            }, 3);
+
+            if ($result) {
+                $count++;
+                [$locked, $refund] = $result;
+                $locked->user?->notify(new ReservationForfeited($locked, $percent, $refund));
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Email (and SMS) a reminder once for pickups due within the next 24 hours.
+     */
+    public function remindDue(): int
+    {
+        $due = Reservation::query()
+            ->with('user')
+            ->whereIn('status', ReservationStatus::awaitingPickup())
+            ->whereNotNull('user_id')
+            ->whereNull('reminded_at')
+            ->whereBetween('pickup_by', [now(), now()->addDay()])
+            ->get();
+
+        $sent = 0;
+
+        foreach ($due as $reservation) {
+            // Claim first so two runs cannot both send.
+            $claimed = Reservation::query()->whereKey($reservation->id)->whereNull('reminded_at')->update(['reminded_at' => now()]);
+
+            if ($claimed === 1) {
+                $reservation->user->notify(new PickupReminder($reservation));
+                $sent++;
+            }
+        }
+
+        return $sent;
+    }
+
+    /**
+     * Queue a refund of $percent of every paid downpayment. Runs inside the caller's transaction.
+     */
+    private function refundDownpayment(Reservation $reservation, int $percent, string $reason, ?User $by): ?Payment
+    {
+        if ($percent <= 0) {
+            return null;
+        }
+
+        $refund = null;
+
+        $paid = Payment::query()
+            ->where('reservation_id', $reservation->id)
+            ->where('type', PaymentType::Downpayment)
+            ->where('status', PaymentStatus::Paid)
+            ->get();
+
+        foreach ($paid as $payment) {
+            $refund = $this->refunds->queue($payment, Money::percent($payment->amount, $percent), $reason, $by) ?? $refund;
+        }
+
+        return $refund;
     }
 
     /**
