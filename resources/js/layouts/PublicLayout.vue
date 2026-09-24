@@ -22,14 +22,15 @@ const page = usePage<SharedData>();
                     class="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <AppLogoIcon class="size-8 shrink-0" />
-                    <span class="truncate font-bold tracking-tight">SWA I.T. Supplies</span>
+                    <span class="hidden truncate font-bold tracking-tight sm:inline">SWA I.T. Supplies</span>
+                    <span class="sr-only sm:hidden">SWA I.T. Supplies home</span>
                 </Link>
 
                 <nav aria-label="Main" class="ml-auto flex items-center gap-1 text-sm">
                     <template v-if="page.props.auth.user">
                         <Link
                             :href="route('dashboard')"
-                            class="inline-flex h-10 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            class="inline-flex h-10 items-center whitespace-nowrap rounded-md bg-primary px-4 font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                             {{ page.props.auth.user.role === 'customer' ? 'My reservations' : 'Open dashboard' }}
                         </Link>
@@ -37,13 +38,13 @@ const page = usePage<SharedData>();
                     <template v-else>
                         <Link
                             :href="route('login')"
-                            class="inline-flex h-10 items-center rounded-md px-3 font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            class="inline-flex h-10 items-center whitespace-nowrap rounded-md px-3 font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             Log in
                         </Link>
                         <Link
                             :href="route('register')"
-                            class="inline-flex h-10 items-center rounded-md bg-primary px-4 font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            class="inline-flex h-10 items-center whitespace-nowrap rounded-md bg-primary px-4 font-medium text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                             Create account
                         </Link>
