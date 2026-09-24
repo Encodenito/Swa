@@ -1,11 +1,15 @@
 <?php
 
+use App\Enums\SettingKey;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome');
+    return Inertia::render('Welcome', [
+        'downpaymentPercent' => setting(SettingKey::DownpaymentPercent),
+        'pickupDays' => setting(SettingKey::PickupDays),
+    ]);
 })->name('home');
 
 // Post-login landing: send each role to its own area.

@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-vue-next';
 
 export interface Auth {
-    user: User;
+    user: User | null;
 }
 
 export interface BreadcrumbItem {
@@ -17,8 +17,8 @@ export interface NavItem {
 }
 
 export interface SharedData {
+    [key: string]: unknown;
     name: string;
-    quote: { message: string; author: string };
     auth: Auth;
     ziggy: {
         location: string;
@@ -29,14 +29,16 @@ export interface SharedData {
     };
 }
 
+export type Role = 'customer' | 'staff' | 'admin';
+
+/** Matches the fields shared by HandleInertiaRequests; nothing else is sent. */
 export interface User {
     id: number;
     name: string;
     email: string;
+    role: Role;
     avatar?: string;
     email_verified_at: string | null;
-    created_at: string;
-    updated_at: string;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
