@@ -48,7 +48,8 @@ class ConfirmPaymentService
             ->first();
 
         if (! $reservation) {
-            Log::warning('PayMongo payment for an unknown reservation.', ['reference' => $event->referenceNumber, 'payment' => $event->paymentId]);
+            // Money was captured but matches no reservation: needs a person.
+            Log::error('PayMongo payment for an unknown reservation.', ['reference' => $event->referenceNumber, 'payment' => $event->paymentId]);
 
             return self::UNKNOWN_RESERVATION;
         }

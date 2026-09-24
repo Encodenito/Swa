@@ -41,14 +41,16 @@ class ReservationController extends Controller
         Gate::authorize('create', Reservation::class);
 
         $reservation = $service->create($request->user(), $cart->quantities(), $request->boolean('terms'));
-        $cart->clear();
 
         try {
             $checkoutUrl = $service->startCheckout($reservation);
         } catch (PayMongoException) {
+            // The cart is kept so the customer can simply try again.
             return redirect()->route('account.cart')
                 ->with('error', 'We could not open the payment page, so your reservation was cancelled and nothing was charged. Please try again.');
         }
+
+        $cart->clear();
 
         return Inertia::location($checkoutUrl);
     }

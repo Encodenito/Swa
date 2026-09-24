@@ -44,7 +44,14 @@ class PayMongoWebhookController extends Controller
         if (! $event) {
             // A paid event we cannot read must not be silently dropped: fail so it shows in the
             // PayMongo dashboard and is retried while the parser is fixed.
-            Log::error('Unreadable PayMongo paid event.', ['payload' => $payload]);
+            // Log identifiers only: the session can carry billing name, email, phone and address.
+            $session = data_get($payload, 'data.attributes.data') ?? data_get($payload, 'data.data');
+            Log::error('Unreadable PayMongo paid event.', [
+                'event_id' => data_get($payload, 'data.id'),
+                'session_id' => data_get($session, 'id'),
+                'reference' => data_get($session, 'attributes.reference_number'),
+                'session_keys' => is_array($session) ? array_keys((array) data_get($session, 'attributes', [])) : null,
+            ]);
 
             return response()->json(['message' => 'Unreadable paid event.'], 422);
         }

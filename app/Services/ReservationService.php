@@ -20,6 +20,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ReservationService
 {
@@ -116,11 +117,15 @@ class ReservationService
     {
         try {
             $session = $this->payMongo->createCheckout($reservation);
-        } catch (PayMongoException $e) {
-            Log::error('PayMongo checkout creation failed.', ['reservation' => $reservation->reference_code, 'code' => $e->errorCode]);
+        } catch (Throwable $e) {
+            // Any failure (API error, bad config) must not leave stock held by an unpayable reservation.
+            Log::error('PayMongo checkout creation failed.', [
+                'reservation' => $reservation->reference_code,
+                'code' => $e instanceof PayMongoException ? $e->errorCode : $e::class,
+            ]);
             $this->cancelUnpaid($reservation, 'Payment page could not be created.');
 
-            throw $e;
+            throw $e instanceof PayMongoException ? $e : new PayMongoException('Checkout could not be created.', 'config_error', $e);
         }
 
         $reservation->forceFill([

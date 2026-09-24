@@ -113,6 +113,23 @@ class ReservationFlowTest extends TestCase
         $this->assertSame(3, $this->item->fresh()->availableQuantity());
         $this->assertSame(2, (int) StockMovement::where('type', MovementType::Released)->sum('quantity'));
         $this->assertStockReconciles();
+
+        // The cart survives so the customer can retry.
+        $this->assertSame([$this->item->id => 2], session('cart'));
+    }
+
+    public function test_a_payment_config_error_also_cancels_and_returns_the_stock(): void
+    {
+        config(['paymongo.secret_key' => 'sk_live_oops']);
+        $this->actingAs($this->customer)->post(route('account.cart.add'), ['item_id' => $this->item->id, 'quantity' => 1]);
+
+        $this->actingAs($this->customer)->post(route('account.reservations.store'), ['terms' => '1'])
+            ->assertRedirect(route('account.cart'))
+            ->assertSessionHas('error');
+
+        $this->assertSame(ReservationStatus::Cancelled, Reservation::sole()->status);
+        $this->assertSame(3, $this->item->fresh()->availableQuantity());
+        Http::assertNothingSent();
     }
 
     public function test_cart_quantity_is_capped_by_the_setting(): void
@@ -176,5 +193,7 @@ class ReservationFlowTest extends TestCase
         $this->assertNotNull($event);
         $this->assertSame('* * * * *', $event->expression);
         $this->assertTrue($event->withoutOverlapping);
+        // A crashed run must not block expiry for a day (default mutex is 24h).
+        $this->assertSame(5, $event->expiresAt);
     }
 }

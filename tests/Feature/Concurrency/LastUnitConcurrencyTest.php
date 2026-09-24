@@ -19,6 +19,21 @@ class LastUnitConcurrencyTest extends TestCase
 {
     use BuildsStock, DatabaseTruncation;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // DatabaseTruncation only cleans before a test. Clean after, too, so committed rows never
+        // leak into later RefreshDatabase tests.
+        $this->beforeApplicationDestroyed(function () {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+            foreach (['stock_movements', 'payments', 'reservation_items', 'reservations', 'stock_batches', 'delivery_items', 'deliveries', 'items', 'categories', 'suppliers', 'users', 'settings'] as $table) {
+                DB::table($table)->truncate();
+            }
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        });
+    }
+
     public function test_two_customers_cannot_both_take_the_last_unit(): void
     {
         $item = Item::factory()->create(['price' => '999.00']);
