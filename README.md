@@ -122,4 +122,4 @@ Later phases add sections on verifying a Resend domain and backups.
 
 - Never copy `.env.example` as-is: set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true` and a real `APP_URL`.
 - Seed with `php artisan db:seed --class=SettingsSeeder`, not `migrate --seed`. The dev accounts are refused outside `local`/`testing`, but only if `APP_ENV` is set correctly.
-- Create the first admin with `php artisan swa:create-admin`. Customers cannot delete their own accounts; an admin deactivates them instead.
+- Create the first admin with `php artisan swa:create-admin`. Customers cannot delete their own accounts. Deactivation (`users.deactivated_at`) blocks login today; the admin screen for it comes in Phase 2.
