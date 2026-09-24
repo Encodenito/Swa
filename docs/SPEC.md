@@ -190,3 +190,6 @@ UI: mobile-first (customers will mostly use phones), Tailwind, Vue 3 `<script se
 | 2026-09-24 | Git is local only (no push, no PRs) | Owner's choice. Owner pushes and merges. |
 | 2026-09-24 | Checkout endpoint `POST /v1/checkout_sessions`, path kept in `config/paymongo.php` | PayMongo docs (the stated source of truth) document only v1; no v2 checkout endpoint exists in the reference. |
 | 2026-09-24 | Official Laravel Vue starter kit (Inertia + Vue 3 + TypeScript) instead of Breeze | Breeze is superseded by the starter kits in Laravel 12. |
+| 2026-09-24 | Resend key env var is `RESEND_KEY` | It is the name `config/services.php` reads (spec allows either). |
+| 2026-09-24 | Self-service account deletion removed | Hard-deleting users would break reservation/payment history and the audit trail (K.13), and could lock out the only admin. Admin deactivation comes in Phase 1. |
+| 2026-09-24 | Rate limits: registration 5/hour per IP, login 20/min per IP (plus the kit's 5 per email+IP), password change and confirm 6/min | K.10; from the Phase 0 security review. |
