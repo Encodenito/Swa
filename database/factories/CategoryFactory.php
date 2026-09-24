@@ -13,7 +13,7 @@ class CategoryFactory extends Factory
 {
     public function definition(): array
     {
-        $name = fake()->unique()->randomElement(['Laptops', 'Printers', 'Monitors', 'Cables', 'Peripherals', 'Ink', 'Storage', 'Networking'])
+        $name = fake()->randomElement(['Laptops', 'Printers', 'Monitors', 'Cables', 'Peripherals', 'Ink', 'Storage', 'Networking'])
             .' '.fake()->unique()->numberBetween(1, 99999);
 
         return [
