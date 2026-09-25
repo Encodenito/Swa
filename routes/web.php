@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\OrphanPaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SystemHealthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\ChatbotController;
@@ -170,6 +171,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('faqs/test', [FaqController::class, 'test'])->middleware('throttle:staff-writes')->name('faqs.test');
 
         Route::get('messages', [MessageLogController::class, 'index'])->name('messages');
+        Route::get('system-health', SystemHealthController::class)->name('system-health');
 
         Route::post('orphans/{orphan}/refund', [OrphanPaymentController::class, 'refund'])->middleware('throttle:staff-writes')->name('orphans.refund');
         Route::post('orphans/{orphan}/retry', [OrphanPaymentController::class, 'retry'])->middleware('throttle:staff-writes')->name('orphans.retry');

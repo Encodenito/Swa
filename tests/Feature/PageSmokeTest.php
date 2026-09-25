@@ -52,6 +52,7 @@ class PageSmokeTest extends TestCase
             'chat handoffs' => ['staff', '/staff/handoffs'],
             'faqs' => ['admin', '/admin/faqs'],
             'messages sent' => ['admin', '/admin/messages'],
+            'system health' => ['admin', '/admin/system-health'],
             'profile' => ['customer', '/settings/profile'],
         ];
     }

@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\HealthCheckService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 // Scheduler times follow config('app.timezone') = Asia/Manila. Run locally with `php artisan schedule:work`.
@@ -14,3 +16,10 @@ Schedule::command('reservations:remind')->dailyAt('08:00')->withoutOverlapping(3
 Schedule::command('stock:low-alert')->dailyAt('08:00')->withoutOverlapping(30);
 
 Schedule::command('chat:purge-handoffs')->dailyAt('03:00')->withoutOverlapping(30);
+
+// Heartbeat: lets the dashboard and `swa:preflight` notice when the scheduler has stopped.
+Schedule::call(fn () => Cache::put(HealthCheckService::HEARTBEAT_KEY, now()->timestamp, now()->addDay()))
+    ->name('scheduler-heartbeat')
+    ->everyMinute();
+
+Schedule::command('swa:backup')->dailyAt('02:00')->withoutOverlapping(60);

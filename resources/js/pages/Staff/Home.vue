@@ -3,10 +3,11 @@ import Heading from '@/components/Heading.vue';
 import StatusBadge from '@/components/shop/StatusBadge.vue';
 import DashboardCard from '@/components/shop/crm/DashboardCard.vue';
 import { dateOnlyIso } from '@/components/shop/crm/crm';
+import HealthAlerts from '@/components/shop/staff/HealthAlerts.vue';
 import StaffLayout from '@/layouts/StaffLayout.vue';
 import { formatDate, formatDateTime } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
-import type { ReservationStatus } from '@/types';
+import type { HealthCheck, ReservationStatus } from '@/types';
 import { Head, Link } from '@inertiajs/vue3';
 import { ReceiptText, ScanLine, Truck, UserPlus } from 'lucide-vue-next';
 
@@ -25,6 +26,7 @@ interface ReservationCard {
 }
 
 defineProps<{
+    health: HealthCheck[];
     summary: {
         pickups_today: ReservationCard;
         overdue_pickups: ReservationCard;
@@ -62,6 +64,8 @@ const listLink = 'block rounded-md px-2 py-1.5 -mx-2 hover:bg-accent focus-visib
     <StaffLayout :breadcrumbs="breadcrumbs">
         <div class="px-4 py-6">
             <Heading title="Staff dashboard" description="What needs doing today, at a glance." />
+
+            <HealthAlerts :checks="health" />
 
             <nav aria-label="Quick actions" class="mb-6">
                 <ul class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">

@@ -143,3 +143,13 @@ export interface ReservationDetail extends ReservationSummary {
     lines: ReservationLine[];
     payments: PaymentRow[];
 }
+
+/** App\Services\HealthCheckService check. Never contains secret values. */
+export interface HealthCheck {
+    key: string;
+    group: string;
+    label: string;
+    status: 'ok' | 'warn' | 'fail';
+    detail: string;
+    fix: string | null;
+}

@@ -1,5 +1,6 @@
 import type { NavItem, Role } from '@/types';
 import {
+    Activity,
     CalendarCheck,
     ClipboardCheck,
     ClipboardList,
@@ -65,6 +66,7 @@ export function navFor(area: Area): NavItem[] {
                 { title: 'Audit log', href: route('admin.audit-log'), icon: ScrollText },
                 { title: 'Messages sent', href: route('admin.messages'), icon: Mail },
                 { title: 'Chatbot FAQ', href: route('admin.faqs.index'), icon: HelpCircle },
+                { title: 'System health', href: route('admin.system-health'), icon: Activity },
                 { title: 'Settings', href: route('admin.settings.edit'), icon: Cog },
             ];
     }
