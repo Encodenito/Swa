@@ -47,6 +47,11 @@ class PageSmokeTest extends TestCase
             'accounts' => ['admin', '/admin/users'],
             'reports' => ['admin', '/admin/reports'],
             'audit log' => ['admin', '/admin/audit-log'],
+            'customers' => ['staff', '/staff/customers'],
+            'follow-ups' => ['staff', '/staff/follow-ups'],
+            'chat handoffs' => ['staff', '/staff/handoffs'],
+            'faqs' => ['admin', '/admin/faqs'],
+            'messages sent' => ['admin', '/admin/messages'],
             'profile' => ['customer', '/settings/profile'],
         ];
     }

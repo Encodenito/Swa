@@ -177,7 +177,7 @@ function reservationHref(r: ReservationSummary): string {
                 <ul class="flex flex-col gap-1 text-sm sm:flex-row sm:flex-wrap sm:gap-x-5">
                     <li>
                         <a
-                            :href="`mailto:${customer.email}`"
+                            :href="`mailto:${encodeURIComponent(customer.email)}`"
                             class="inline-flex min-h-9 items-center gap-2 break-all underline-offset-4 hover:underline"
                         >
                             <Mail class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />

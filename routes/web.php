@@ -167,7 +167,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::post('faqs', [FaqController::class, 'store'])->middleware('throttle:staff-writes')->name('faqs.store');
         Route::put('faqs/{faq}', [FaqController::class, 'update'])->middleware('throttle:staff-writes')->name('faqs.update');
         Route::delete('faqs/{faq}', [FaqController::class, 'destroy'])->middleware('throttle:staff-writes')->name('faqs.destroy');
-        Route::post('faqs/test', [FaqController::class, 'test'])->middleware('throttle:chatbot-ask')->name('faqs.test');
+        Route::post('faqs/test', [FaqController::class, 'test'])->middleware('throttle:staff-writes')->name('faqs.test');
 
         Route::get('messages', [MessageLogController::class, 'index'])->name('messages');
 

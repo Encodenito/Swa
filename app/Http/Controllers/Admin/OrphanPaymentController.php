@@ -21,7 +21,7 @@ class OrphanPaymentController extends Controller
 
         $service->refund($orphan, $request->validated('reason'), $request->user());
 
-        return back(303)->with('success', 'Refund sent to PayMongo.');
+        return back(303)->with('success', 'Refund queued. Payments to review shows the result once PayMongo answers.');
     }
 
     public function retry(OrphanPayment $orphan, OrphanPaymentService $service): RedirectResponse
@@ -30,7 +30,7 @@ class OrphanPaymentController extends Controller
 
         $service->retry($orphan, request()->user());
 
-        return back(303)->with('success', 'Refund sent to PayMongo again.');
+        return back(303)->with('success', 'Refund queued again. Check back in a minute for the result.');
     }
 
     public function reconcile(ReconcileRefundRequest $request, OrphanPayment $orphan, OrphanPaymentService $service): RedirectResponse

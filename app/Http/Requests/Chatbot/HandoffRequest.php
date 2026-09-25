@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Chatbot;
 
+use App\Support\SensitiveData;
 use Illuminate\Foundation\Http\FormRequest;
 
 class HandoffRequest extends FormRequest
@@ -27,7 +28,9 @@ class HandoffRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             // An email address or a Philippine mobile number, so staff can reply.
             'contact' => ['required', 'string', 'max:150', function (string $attribute, mixed $value, \Closure $fail) {
-                $ok = filter_var($value, FILTER_VALIDATE_EMAIL) || preg_match('/^(09|\+639)\d{9}$/', (string) $value);
+                // No ? & = % in the address: they would inject subject/body into staff mailto: links.
+                $email = filter_var($value, FILTER_VALIDATE_EMAIL) && ! preg_match('/[?&=%]/', (string) $value);
+                $ok = $email || preg_match('/^(09|\+639)\d{9}$/', (string) $value);
                 if (! $ok) {
                     $fail('Enter an email address or a mobile number like 09171234567.');
                 }
@@ -46,8 +49,16 @@ class HandoffRequest extends FormRequest
     {
         return collect($this->validated('transcript') ?? [])
             ->take(-10)
-            ->map(fn (array $turn) => ['from' => $turn['from'], 'text' => mb_substr($turn['text'], 0, 1000)])
+            ->map(fn (array $turn) => ['from' => $turn['from'], 'text' => SensitiveData::maskCardNumbers(mb_substr($turn['text'], 0, 1000))])
             ->values()
             ->all();
+    }
+
+    /**
+     * Visitors paste card numbers into support chats; keep only the last 4 digits (spec K.12).
+     */
+    public function safeMessage(): string
+    {
+        return SensitiveData::maskCardNumbers($this->validated('message'));
     }
 }

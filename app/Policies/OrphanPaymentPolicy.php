@@ -10,6 +10,14 @@ use App\Models\User;
  */
 class OrphanPaymentPolicy
 {
+    /**
+     * Staff see orphan payments on Payments to review (read-only); only admins act on them.
+     */
+    public function viewAny(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
     public function handle(User $user, OrphanPayment $orphan): bool
     {
         return $user->isAdmin();

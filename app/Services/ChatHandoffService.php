@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\StateConflictException;
 use App\Models\ChatHandoff;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Chat visitors who asked for a person. Staff claim (exactly one wins) and close with a note;
@@ -23,6 +24,16 @@ class ChatHandoffService
      */
     public function create(string $name, string $contact, string $message, array $transcript, ?User $user): ChatHandoff
     {
+        // One waiting request per person: a second one only buries the queue.
+        $alreadyWaiting = ChatHandoff::query()
+            ->whereIn('status', [self::OPEN, self::CLAIMED])
+            ->where(fn ($q) => $q->where('contact', $contact)->when($user, fn ($u) => $u->orWhere('user_id', $user->id)))
+            ->exists();
+
+        if ($alreadyWaiting) {
+            throw new StateConflictException('We already have your request and will contact you soon.');
+        }
+
         $handoff = new ChatHandoff;
         $handoff->forceFill([
             'name' => $name,
@@ -67,7 +78,8 @@ class ChatHandoffService
                 'status' => self::CLOSED,
                 'closed_at' => now(),
                 'reply_note' => mb_substr($replyNote, 0, 500),
-                'claimed_by' => $handoff->claimed_by ?? $staff->id,
+                // Keep whoever claimed it (read from the row, not the possibly stale page).
+                'claimed_by' => DB::raw('COALESCE(claimed_by, '.(int) $staff->id.')'),
                 'updated_at' => now(),
             ]);
 

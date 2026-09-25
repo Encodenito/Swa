@@ -12,3 +12,5 @@ Schedule::command('reservations:forfeit')->hourly()->withoutOverlapping(10);
 Schedule::command('reservations:remind')->dailyAt('08:00')->withoutOverlapping(30);
 
 Schedule::command('stock:low-alert')->dailyAt('08:00')->withoutOverlapping(30);
+
+Schedule::command('chat:purge-handoffs')->dailyAt('03:00')->withoutOverlapping(30);

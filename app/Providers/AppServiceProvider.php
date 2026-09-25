@@ -81,7 +81,12 @@ class AppServiceProvider extends ServiceProvider
         // Public chatbot (spec K.10): answers are cheap but still capped; handoffs create staff work.
         RateLimiter::for('chatbot-ask', fn (Request $request) => Limit::perMinute(20)->by('chat:'.$request->ip()));
 
-        RateLimiter::for('chatbot-handoff', fn (Request $request) => Limit::perMinutes(10, 3)->by('handoff:'.$request->ip()));
+        RateLimiter::for('chatbot-handoff', fn (Request $request) => [
+            Limit::perMinutes(10, 3)->by('handoff:ip:'.$request->ip()),
+            Limit::perHour(3)->by('handoff:contact:'.sha1(mb_strtolower(trim((string) $request->input('contact'))))),
+            // Shop-wide cap so many IPs together cannot bury real customers.
+            Limit::perHour(30)->by('handoff:global'),
+        ]);
 
         RateLimiter::for('paymongo-webhook', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
     }

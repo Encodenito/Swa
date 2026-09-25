@@ -118,10 +118,10 @@ class ChatbotTest extends TestCase
 
         // The rejected attempt above counts too: 3 per 10 minutes in total.
         for ($i = 0; $i < 2; $i++) {
-            $this->postJson(route('chatbot.handoff'), ['name' => 'A', 'contact' => 'a@example.com', 'message' => 'hi there'])->assertCreated();
+            $this->postJson(route('chatbot.handoff'), ['name' => 'A', 'contact' => "a{$i}@example.com", 'message' => 'hi there'])->assertCreated();
         }
 
-        $this->postJson(route('chatbot.handoff'), ['name' => 'A', 'contact' => 'a@example.com', 'message' => 'hi there'])->assertStatus(429);
+        $this->postJson(route('chatbot.handoff'), ['name' => 'A', 'contact' => 'z@example.com', 'message' => 'hi there'])->assertStatus(429);
     }
 
     public function test_exactly_one_staff_member_claims_a_handoff(): void

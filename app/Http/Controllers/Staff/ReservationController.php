@@ -100,7 +100,7 @@ class ReservationController extends Controller
         );
 
         return back(303)->with('success', $refund
-            ? 'Reservation cancelled. A refund of '.Money::format($refund->amount).' was sent to PayMongo.'
+            ? 'Reservation cancelled. A refund of '.Money::format($refund->amount).' is queued for PayMongo.'
             : 'Reservation cancelled without a refund.');
     }
 }

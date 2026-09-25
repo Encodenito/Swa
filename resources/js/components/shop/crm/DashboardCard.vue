@@ -24,11 +24,7 @@ const props = withDefaults(
 const headingId = computed(() => `card-${props.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
 
 const border = computed(() =>
-    props.attention === 'red'
-        ? 'border-l-4 border-l-red-600 dark:border-l-red-500'
-        : props.attention === 'amber'
-          ? 'border-l-4 border-l-amber-500'
-          : '',
+    props.attention === 'red' ? 'border-red-300 dark:border-red-800' : props.attention === 'amber' ? 'border-amber-300 dark:border-amber-700' : '',
 );
 
 const badge = computed(() =>

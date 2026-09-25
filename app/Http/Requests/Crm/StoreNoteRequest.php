@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Crm;
 
+use App\Support\SensitiveData;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreNoteRequest extends FormRequest
@@ -18,17 +19,11 @@ class StoreNoteRequest extends FormRequest
     {
         return [
             // Spec K.12/K.14: never card data, keep personal data minimal.
-            'body' => ['required', 'string', 'min:2', 'max:2000', 'not_regex:/(?:\d[ -]?){13,19}/'],
-        ];
-    }
-
-    /**
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
-        return [
-            'body.not_regex' => 'This looks like a card or account number. Do not store card numbers or ID numbers in notes.',
+            'body' => ['required', 'string', 'min:2', 'max:2000', function (string $attribute, mixed $value, \Closure $fail) {
+                if (is_string($value) && SensitiveData::containsCardNumber($value)) {
+                    $fail('This looks like a card number. Never store card numbers in the app.');
+                }
+            }],
         ];
     }
 }

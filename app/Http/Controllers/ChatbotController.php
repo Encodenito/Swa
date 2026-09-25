@@ -23,7 +23,7 @@ class ChatbotController extends Controller
         $handoffs->create(
             $request->validated('name'),
             $request->validated('contact'),
-            $request->validated('message'),
+            $request->safeMessage(),
             $request->transcript(),
             $request->user(),
         );

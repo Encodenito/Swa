@@ -6,7 +6,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\ReservationStatus;
 use App\Models\ChatHandoff;
 use App\Models\FollowUp;
-use App\Models\OrphanPayment;
 use App\Models\Reservation;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -53,9 +52,7 @@ class DashboardService
                 'count' => (clone $review)->count(),
                 'needs_review' => (clone $review)->where('status', PaymentStatus::NeedsReview)->count(),
                 'refund_failed' => (clone $review)->where('status', PaymentStatus::RefundFailed)->count(),
-                'orphans' => OrphanPayment::query()
-                    ->where(fn ($q) => $q->whereNull('reviewed_at')->orWhere('refund_status', OrphanPaymentService::REFUND_FAILED))
-                    ->count(),
+                'orphans' => app(OrphanPaymentService::class)->reviewQuery()->count(),
             ],
             'open_handoffs' => ChatHandoff::query()->where('status', ChatHandoffService::OPEN)->count(),
             'follow_ups_due' => [

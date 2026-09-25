@@ -8,6 +8,7 @@ use App\Models\OrphanPayment;
 use App\Models\User;
 use App\Services\PayMongo\PaidCheckoutEvent;
 use App\Support\Money;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -27,6 +28,23 @@ class OrphanPaymentService
     public function __construct(private readonly AuditLogger $audit) {}
 
     /**
+     * Orphans that need a person: not yet decided, refund refused, or refund with no answer for
+     * more than STUCK_AFTER_MINUTES. Failed and stuck first so they are never hidden by old rows.
+     * Used by both Payments to review and the dashboard so their numbers agree.
+     */
+    public function reviewQuery(): Builder
+    {
+        $stuckBefore = now()->subMinutes(PaymentReviewService::STUCK_AFTER_MINUTES);
+
+        return OrphanPayment::query()
+            ->where(fn (Builder $q) => $q->whereNull('reviewed_at')
+                ->orWhere('refund_status', self::REFUND_FAILED)
+                ->orWhere(fn (Builder $p) => $p->where('refund_status', self::REFUND_PENDING)->where('updated_at', '<', $stuckBefore)))
+            ->orderByRaw('CASE WHEN refund_status IS NULL THEN 1 ELSE 0 END')
+            ->oldest('received_at');
+    }
+
+    /**
      * Idempotent on provider_ref: the same webhook delivered twice stores one row.
      */
     public function record(PaidCheckoutEvent $event): void
@@ -43,6 +61,9 @@ class OrphanPaymentService
                 'checkout_id' => $event->checkoutId,
                 'amount' => Money::fromCentavos($event->amountCentavos),
                 'received_at' => now(),
+                'note' => preg_match('/^SWA-[A-Z0-9]{8}$/', $event->referenceNumber)
+                    ? null
+                    : "Reference is not in this shop's SWA- format: check it is not another system's payment before refunding.",
             ])->save();
         } catch (UniqueConstraintViolationException) {
             // A concurrent delivery stored it first.

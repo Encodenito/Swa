@@ -21,7 +21,7 @@ use Inertia\Response;
 
 class PaymentReviewController extends Controller
 {
-    public function index(Request $request, PaymentReviewService $reviews): Response
+    public function index(Request $request, PaymentReviewService $reviews, OrphanPaymentService $orphans): Response
     {
         Gate::authorize('review', Payment::class);
 
@@ -53,11 +53,7 @@ class PaymentReviewController extends Controller
             'canMarkReviewed' => $request->user()->isAdmin(),
             'canReconcile' => $request->user()->isAdmin(),
             // Payments PayMongo captured for a reference that matches no reservation (admin decides).
-            'orphans' => OrphanPayment::query()
-                ->where(fn ($q) => $q->whereNull('reviewed_at')
-                    ->orWhere('refund_status', OrphanPaymentService::REFUND_FAILED)
-                    ->orWhere(fn ($p) => $p->where('refund_status', OrphanPaymentService::REFUND_PENDING)->where('updated_at', '<', $stuckBefore)))
-                ->oldest('received_at')
+            'orphans' => $request->user()->can('viewAny', OrphanPayment::class) ? $orphans->reviewQuery()
                 ->limit(50)
                 ->get()
                 ->map(fn (OrphanPayment $o) => [
@@ -73,7 +69,7 @@ class PaymentReviewController extends Controller
                         default => 'unmatched',
                     },
                     'note' => $o->note,
-                ]),
+                ]) : [],
         ]);
     }
 
@@ -83,7 +79,7 @@ class PaymentReviewController extends Controller
 
         $refund = $reviews->refundInFull($payment, $request->validated('reason'), $request->user());
 
-        return back(303)->with('success', 'Refund of '.Money::format($refund->amount).' sent to PayMongo.');
+        return back(303)->with('success', 'Refund of '.Money::format($refund->amount).' queued. This page shows the result once PayMongo answers.');
     }
 
     public function retry(Request $request, Payment $payment, RefundService $refunds): RedirectResponse
@@ -92,7 +88,7 @@ class PaymentReviewController extends Controller
 
         $refunds->retry($payment, $request->user());
 
-        return back(303)->with('success', 'Refund sent to PayMongo again. Check back in a minute.');
+        return back(303)->with('success', 'Refund queued again. Check back in a minute for the result.');
     }
 
     public function markReviewed(ReasonRequest $request, Payment $payment, PaymentReviewService $reviews): RedirectResponse

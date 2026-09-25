@@ -83,6 +83,13 @@ class CustomerController extends Controller
 
         $reservations = $customer->reservations()->with('lines')->latest()->limit(50)->get();
 
+        $statusCounts = Reservation::query()
+            ->where('user_id', $customer->id)
+            ->selectRaw('status, COUNT(*) as n')
+            ->groupBy('status')
+            ->pluck('n', 'status')
+            ->all();
+
         $spent = Reservation::query()
             ->where('user_id', $customer->id)
             ->where('status', ReservationStatus::Completed)
@@ -100,11 +107,12 @@ class CustomerController extends Controller
                 'created_at' => $customer->created_at?->toIso8601String(),
                 'tags' => $customer->tags()->orderBy('name')->get(['tags.id', 'name', 'slug', 'colour'])->map->only(['id', 'name', 'slug', 'colour']),
             ],
+            // Counts cover every reservation, not only the 50 listed.
             'stats' => [
-                'reservations' => $reservations->count(),
-                'completed' => $reservations->where('status', ReservationStatus::Completed)->count(),
-                'cancelled' => $reservations->where('status', ReservationStatus::Cancelled)->count(),
-                'forfeited' => $reservations->where('status', ReservationStatus::Forfeited)->count(),
+                'reservations' => (int) array_sum($statusCounts),
+                'completed' => (int) ($statusCounts[ReservationStatus::Completed->value] ?? 0),
+                'cancelled' => (int) ($statusCounts[ReservationStatus::Cancelled->value] ?? 0),
+                'forfeited' => (int) ($statusCounts[ReservationStatus::Forfeited->value] ?? 0),
                 'spent' => Money::add(...$spent),
             ],
             'reservations' => $reservations->map(fn (Reservation $r) => ReservationPresenter::summary($r))->values(),
