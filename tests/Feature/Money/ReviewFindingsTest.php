@@ -240,6 +240,19 @@ class ReviewFindingsTest extends TestCase
         ])->assertSessionHasErrors('walk_in_phone');
     }
 
+    public function test_phone_numbers_with_spaces_or_dashes_are_accepted(): void
+    {
+        $item = Item::factory()->create();
+        $this->stockBatch($item, 3);
+
+        $this->actingAs(User::factory()->staff()->create())->post(route('staff.walk-ins.store'), [
+            'lines' => [['item_id' => $item->id, 'quantity' => 1]],
+            'walk_in_phone' => '0917 123-4567',
+        ])->assertSessionHasNoErrors();
+
+        $this->assertSame('09171234567', Reservation::sole()->walk_in_phone);
+    }
+
     public function test_staff_writes_are_rate_limited(): void
     {
         $staff = User::factory()->staff()->create();

@@ -208,7 +208,11 @@ function pay() {
                         <dt class="text-muted-foreground">{{ downpaymentLabel }}</dt>
                         <dd class="font-semibold tabular-nums">{{ formatPeso(reservation.downpayment_amount) }}</dd>
                     </div>
-                    <div class="flex items-baseline justify-between gap-4 border-t border-border pt-2 text-base">
+                    <!-- A cancelled, expired or forfeited reservation owes nothing, so no balance is shown. -->
+                    <div
+                        v-if="!['cancelled', 'expired', 'forfeited'].includes(status)"
+                        class="flex items-baseline justify-between gap-4 border-t border-border pt-2 text-base"
+                    >
                         <dt class="font-semibold">{{ balanceLabel }}</dt>
                         <dd class="font-bold tabular-nums">{{ formatPeso(reservation.balance) }}</dd>
                     </div>

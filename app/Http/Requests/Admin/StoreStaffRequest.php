@@ -15,6 +15,16 @@ class StoreStaffRequest extends FormRequest
     }
 
     /**
+     * Accept 0917 123 4567 or 0917-123-4567: strip spaces and dashes before validating.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('phone'))) {
+            $this->merge(['phone' => preg_replace('/[\s-]+/', '', $this->input('phone')) ?: null]);
+        }
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function rules(): array

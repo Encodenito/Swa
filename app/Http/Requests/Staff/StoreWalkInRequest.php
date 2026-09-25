@@ -13,6 +13,16 @@ class StoreWalkInRequest extends FormRequest
     }
 
     /**
+     * Accept 0917 123 4567 or 0917-123-4567: strip spaces and dashes before validating.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('walk_in_phone'))) {
+            $this->merge(['walk_in_phone' => preg_replace('/[\s-]+/', '', $this->input('walk_in_phone')) ?: null]);
+        }
+    }
+
+    /**
      * Item ids and quantities only; prices and the total come from the server.
      *
      * @return array<string, mixed>

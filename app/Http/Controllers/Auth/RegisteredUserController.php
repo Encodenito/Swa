@@ -31,6 +31,11 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Accept 0917 123 4567 or 0917-123-4567.
+        if (is_string($request->input('phone'))) {
+            $request->merge(['phone' => preg_replace('/[\s-]+/', '', $request->input('phone')) ?: null]);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
