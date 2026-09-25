@@ -213,4 +213,4 @@ UI: mobile-first (customers will mostly use phones), Tailwind, Vue 3 `<script se
 | 2026-09-26 | "Keep payment, mark reviewed" (no refund) is admin-only and audit-logged | A money decision. |
 | 2026-09-26 | Walk-in void records a cash refund row (`refunded` at once) and returns stock through `adjusted` movements | Spec C; keeps sales reports reconciled. |
 | 2026-09-26 | The cancel reason is shown to the customer (page and email); staff see a note saying so | Security review: avoid internal remarks reaching customers. |
-| 2026-09-26 | Stuck refunds of a PayMongo payment for an unknown reservation are not stored (no reservation to attach them to); they are logged at error level only | Deferred: needs a place for orphan payments (Phase 3 or later). |
+| 2026-09-26 | A PayMongo payment whose reference matches no reservation is not stored (there is no reservation to attach it to); it is logged at error level only | Deferred: needs a place for orphan payments (Phase 3 or later). |
