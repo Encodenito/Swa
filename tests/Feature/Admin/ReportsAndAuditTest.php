@@ -105,7 +105,7 @@ class ReportsAndAuditTest extends TestCase
             'downpayment_percent' => 40, 'pickup_days' => 3, 'forfeit_refund_percent' => 50,
             'pending_minutes' => 30, 'max_unpaid_reservations' => 2, 'max_qty_per_item' => 10,
         ]);
-        $this->actingAs($this->admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 100, 'reason' => 'Defective']);
+        $this->actingAs($this->admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 100, 'reason' => 'Defective', 'expected_status' => $reservation->fresh()->status->value]);
 
         $actions = AuditLog::orderBy('id')->pluck('action')->all();
 

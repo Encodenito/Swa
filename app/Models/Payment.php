@@ -30,6 +30,7 @@ class Payment extends Model
             'method' => PaymentMethod::class,
             'amount' => 'decimal:2',
             'reviewed_at' => 'datetime',
+            'refund_attempted_at' => 'datetime',
         ];
     }
 

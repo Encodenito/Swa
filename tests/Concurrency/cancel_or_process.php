@@ -28,7 +28,7 @@ if (! str_ends_with((string) config('database.connections.'.config('database.def
 
 // This child process must never reach PayMongo or Resend.
 Http::preventStrayRequests();
-Http::fake(['api.paymongo.com/v1/refunds' => Http::response(['data' => ['id' => 'ref_race']])]);
+Http::fake(['api.paymongo.com/v1/refunds' => fn () => Http::response(['data' => ['id' => 'ref_race_'.bin2hex(random_bytes(6))]])]);
 Notification::fake();
 
 [, $action, $reservationId, $userId, $startAt] = $argv;

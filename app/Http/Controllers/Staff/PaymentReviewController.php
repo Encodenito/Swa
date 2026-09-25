@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Presenters\ReservationPresenter;
+use App\Http\Requests\Admin\ReconcileRefundRequest;
 use App\Http\Requests\Staff\ReasonRequest;
 use App\Models\Payment;
 use App\Services\PaymentReviewService;
@@ -48,6 +49,7 @@ class PaymentReviewController extends Controller
         return Inertia::render('Staff/Payments/Review', [
             'payments' => $payments,
             'canMarkReviewed' => $request->user()->isAdmin(),
+            'canReconcile' => $request->user()->isAdmin(),
         ]);
     }
 
@@ -76,5 +78,17 @@ class PaymentReviewController extends Controller
         $reviews->markReviewed($payment, $request->validated('reason'), $request->user());
 
         return back(303)->with('success', 'Marked as reviewed without a refund.');
+    }
+
+    public function reconcile(ReconcileRefundRequest $request, Payment $payment, RefundService $refunds): RedirectResponse
+    {
+        Gate::authorize('reconcile', $payment);
+
+        $found = $request->validated('outcome') === 'found';
+        $refunds->reconcile($payment, $found ? $request->validated('paymongo_refund_id') : null, $request->validated('reason'), $request->user());
+
+        return back(303)->with('success', $found
+            ? 'Refund recorded as completed at PayMongo.'
+            : 'Marked as failed. You can now retry the refund.');
     }
 }

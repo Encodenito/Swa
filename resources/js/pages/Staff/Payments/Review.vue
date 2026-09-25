@@ -6,6 +6,7 @@ import StatusBadge from '@/components/shop/StatusBadge.vue';
 import ConfirmDialog from '@/components/shop/staff/ConfirmDialog.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import ReasonDialog from '@/components/shop/staff/ReasonDialog.vue';
+import ReconcileDialog from '@/components/shop/staff/ReconcileDialog.vue';
 import { Button } from '@/components/ui/button';
 import StaffLayout from '@/layouts/StaffLayout.vue';
 import { formatDateTime } from '@/lib/dates';
@@ -32,7 +33,17 @@ type ReviewRow = PaymentRow & {
 const props = defineProps<{
     payments: Paginated<ReviewRow>;
     canMarkReviewed: boolean;
+    canReconcile: boolean;
 }>();
+
+// Admin reconciliation of a refund whose outcome is unknown.
+const reconcileTarget = ref<ReviewRow | null>(null);
+const reconcileOpen = ref(false);
+
+function askReconcile(p: ReviewRow) {
+    reconcileTarget.value = p;
+    reconcileOpen.value = true;
+}
 
 const breadcrumbs = [
     { title: 'Staff dashboard', href: route('staff.home') },
@@ -45,7 +56,7 @@ const kinds: { kind: Kind; title: string; explain: string }[] = [
     {
         kind: 'stuck',
         title: 'Refunds with no answer',
-        explain: 'Sent more than 15 minutes ago with no answer. Check the PayMongo dashboard before doing anything.',
+        explain: 'The outcome is unknown (no answer, or PayMongo timed out). The refund may exist at PayMongo, so it is never resent automatically.',
     },
 ];
 
@@ -203,10 +214,17 @@ function retry() {
                                     Retry refund
                                 </Button>
                             </div>
-                            <p v-else class="mt-4 text-muted-foreground">
-                                No action here. Look up the PayMongo reference in the PayMongo dashboard: if the refund went through, this row updates
-                                once PayMongo notifies us. If it did not, tell an admin.
-                            </p>
+                            <div v-else class="mt-4 space-y-2">
+                                <p class="text-muted-foreground">
+                                    Check the PayMongo dashboard for a refund with <span class="font-mono">refund_id = {{ p.id }}</span
+                                    >.
+                                    {{ canReconcile ? 'Then record what you found.' : 'Then ask an admin to record the outcome here.' }}
+                                </p>
+                                <Button v-if="canReconcile" type="button" variant="outline" class="h-10" @click="askReconcile(p)">
+                                    <CheckCheck class="size-4" aria-hidden="true" />
+                                    Reconcile
+                                </Button>
+                            </div>
                         </li>
                     </ul>
                 </section>
@@ -214,6 +232,15 @@ function retry() {
                 <Pagination :links="payments.links" />
             </div>
         </div>
+
+        <ReconcileDialog
+            v-if="reconcileTarget"
+            :key="`reconcile-${reconcileTarget.id}`"
+            v-model:open="reconcileOpen"
+            :refund-id="reconcileTarget.id"
+            :amount="reconcileTarget.amount"
+            :original-ref="reconcileTarget.original?.provider_ref ?? null"
+        />
 
         <ReasonDialog
             v-if="reasonAction"

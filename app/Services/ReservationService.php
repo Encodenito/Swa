@@ -70,7 +70,11 @@ class ReservationService
         try {
             return DB::transaction(function () use ($customer, $quantities, $createdBy) {
                 // Serialises this customer's reservation creation so the unpaid limit cannot be raced.
-                User::query()->whereKey($customer->id)->lockForUpdate()->first();
+                $lockedCustomer = User::query()->whereKey($customer->id)->lockForUpdate()->firstOrFail();
+
+                if (! $lockedCustomer->isCustomer() || $lockedCustomer->deactivated_at !== null || ! $lockedCustomer->hasVerifiedEmail()) {
+                    throw ValidationException::withMessages(['customer' => 'This customer account cannot reserve (it is unverified or deactivated).']);
+                }
 
                 $maxUnpaid = $this->settings->int(SettingKey::MaxUnpaidReservations);
                 $unpaid = Reservation::query()
@@ -261,11 +265,16 @@ class ReservationService
      *
      * @throws StateConflictException|ValidationException
      */
-    public function cancel(Reservation $reservation, User $by, int $refundPercent, ?string $reason): ?Payment
+    public function cancel(Reservation $reservation, User $by, int $refundPercent, ?string $reason, ?ReservationStatus $expectedStatus = null): ?Payment
     {
-        [$locked, $refund] = DB::transaction(function () use ($reservation, $by, $refundPercent, $reason) {
+        [$locked, $refund, $openCheckout] = DB::transaction(function () use ($reservation, $by, $refundPercent, $reason, $expectedStatus) {
             $locked = Reservation::query()->whereKey($reservation->id)->lockForUpdate()->firstOrFail();
             $rules = self::cancelRules($by, $locked);
+
+            // Staff chose the refund for the status they saw; if a webhook confirmed it meanwhile, stop.
+            if ($expectedStatus !== null && $locked->status !== $expectedStatus) {
+                throw new StateConflictException('This reservation changed to '.$locked->status->label().' while you were cancelling. Review it and try again.');
+            }
 
             if ($locked->type !== ReservationType::Reservation || ! in_array($locked->status, $rules['statuses'], true)) {
                 throw new StateConflictException($locked->status === ReservationStatus::Processing && $by->isCustomer()
@@ -278,6 +287,7 @@ class ReservationService
             }
 
             $before = ['status' => $locked->status->value];
+            $openCheckout = $locked->status === ReservationStatus::PendingPayment ? $locked->paymongo_checkout_id : null;
             $locked->forceFill([
                 'status' => ReservationStatus::Cancelled,
                 'cancelled_at' => now(),
@@ -295,8 +305,13 @@ class ReservationService
                 'reason' => $reason,
             ], $by);
 
-            return [$locked, $refund];
+            return [$locked, $refund, $openCheckout];
         }, 3);
+
+        // Close the unpaid PayMongo session so the customer cannot pay for a cancelled reservation.
+        if ($openCheckout) {
+            $this->payMongo->expireCheckout($openCheckout);
+        }
 
         $reservation->refresh();
         $locked->user?->notify(new ReservationCancelled($locked, $refund));
@@ -369,7 +384,11 @@ class ReservationService
 
         foreach ($due as $reservation) {
             // Claim first so two runs cannot both send.
-            $claimed = Reservation::query()->whereKey($reservation->id)->whereNull('reminded_at')->update(['reminded_at' => now()]);
+            $claimed = Reservation::query()
+                ->whereKey($reservation->id)
+                ->whereNull('reminded_at')
+                ->whereIn('status', ReservationStatus::awaitingPickup())
+                ->update(['reminded_at' => now()]);
 
             if ($claimed === 1) {
                 $reservation->user->notify(new PickupReminder($reservation));

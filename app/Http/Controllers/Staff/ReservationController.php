@@ -91,7 +91,13 @@ class ReservationController extends Controller
     {
         Gate::authorize('cancel', $reservation);
 
-        $refund = $service->cancel($reservation, $request->user(), (int) $request->validated('refund_percent'), $request->validated('reason'));
+        $refund = $service->cancel(
+            $reservation,
+            $request->user(),
+            (int) $request->validated('refund_percent'),
+            $request->validated('reason'),
+            ReservationStatus::from($request->validated('expected_status')),
+        );
 
         return back(303)->with('success', $refund
             ? 'Reservation cancelled. A refund of '.Money::format($refund->amount).' was sent to PayMongo.'

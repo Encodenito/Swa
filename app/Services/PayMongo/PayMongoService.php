@@ -69,7 +69,7 @@ class PayMongoService
      *
      * @throws PayMongoException with the PayMongo error code (e.g. available_balance_insufficient)
      */
-    public function createRefund(string $paymentId, int $amountCentavos, string $notes): string
+    public function createRefund(string $paymentId, int $amountCentavos, string $notes, int $localRefundId): string
     {
         $response = $this->send(fn () => $this->client()->post(config('paymongo.refunds_path'), [
             'data' => [
@@ -78,6 +78,8 @@ class PayMongoService
                     'payment_id' => $paymentId,
                     'reason' => 'others',
                     'notes' => mb_substr($notes, 0, 255),
+                    // Lets a person match this refund in the PayMongo dashboard when reconciling.
+                    'metadata' => ['refund_id' => (string) $localRefundId],
                 ],
             ],
         ]));
@@ -129,8 +131,12 @@ class PayMongoService
         try {
             return $request()->throw()->json() ?? [];
         } catch (RequestException $e) {
-            $code = data_get($e->response->json(), 'errors.0.code', 'http_'.$e->response->status());
-            throw new PayMongoException("PayMongo request failed: {$code}", (string) $code, $e);
+            $apiCode = data_get($e->response->json(), 'errors.0.code');
+            $code = is_string($apiCode) ? $apiCode : 'http_'.$e->response->status();
+            // Only a 4xx carrying a PayMongo error code is a definite refusal; a 5xx may have succeeded.
+            $definite = $e->response->clientError() && is_string($apiCode);
+
+            throw new PayMongoException("PayMongo request failed: {$code}", $code, $e, $definite);
         } catch (ConnectionException $e) {
             throw new PayMongoException('Could not reach PayMongo.', 'connection_error', $e);
         }

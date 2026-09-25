@@ -20,7 +20,7 @@ class StoreCustomerReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['required', 'integer', Rule::exists('users', 'id')->where('role', Role::Customer->value)->whereNull('deactivated_at')],
+            'customer_id' => ['required', 'integer', Rule::exists('users', 'id')->where('role', Role::Customer->value)->whereNull('deactivated_at')->whereNotNull('email_verified_at')],
             'lines' => ['required', 'array', 'min:1', 'max:50'],
             'lines.*.item_id' => ['required', 'integer', 'distinct', 'exists:items,id'],
             'lines.*.quantity' => ['required', 'integer', 'min:1', 'max:'.setting(SettingKey::MaxQtyPerItem)],
@@ -34,7 +34,7 @@ class StoreCustomerReservationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'customer_id.exists' => 'Choose an active customer account.',
+            'customer_id.exists' => 'Choose an active customer account with a verified email.',
             'terms_confirmed.accepted' => 'Confirm that the customer agreed to the reservation terms.',
         ];
     }

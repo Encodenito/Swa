@@ -29,14 +29,18 @@ class PasswordController extends Controller
      */
     public function update(Request $request): RedirectResponse
     {
+        // Staff and admin accounts need stronger passwords; a new password must differ from the old one.
+        $rule = $request->user()->isStaff() ? Password::min(12)->letters()->numbers() : Password::defaults();
+
         $validated = $request->validate([
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', Password::defaults(), 'confirmed'],
+            'password' => ['required', $rule, 'confirmed', 'different:current_password'],
         ]);
 
-        $request->user()->update([
+        $request->user()->forceFill([
             'password' => Hash::make($validated['password']),
-        ]);
+            'must_change_password' => false,
+        ])->save();
 
         return back();
     }

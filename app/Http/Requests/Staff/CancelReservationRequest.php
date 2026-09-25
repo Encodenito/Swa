@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Staff;
 
+use App\Enums\ReservationStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,6 +25,8 @@ class CancelReservationRequest extends FormRequest
         return [
             'refund_percent' => ['required', 'integer', Rule::in($allowed)],
             'reason' => ['required', 'string', 'min:3', 'max:255'],
+            // The status the form was shown for; the service refuses if it changed meanwhile.
+            'expected_status' => ['required', Rule::enum(ReservationStatus::class)],
         ];
     }
 

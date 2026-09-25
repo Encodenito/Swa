@@ -24,7 +24,7 @@ class StoreWalkInRequest extends FormRequest
             'lines.*.item_id' => ['required', 'integer', 'distinct', 'exists:items,id'],
             'lines.*.quantity' => ['required', 'integer', 'min:1', 'max:'.max(100, setting(SettingKey::MaxQtyPerItem))],
             'walk_in_name' => ['nullable', 'string', 'max:150'],
-            'walk_in_phone' => ['nullable', 'string', 'max:30'],
+            'walk_in_phone' => ['nullable', 'string', 'regex:/^(09|\+639)\d{9}$/'],
         ];
     }
 

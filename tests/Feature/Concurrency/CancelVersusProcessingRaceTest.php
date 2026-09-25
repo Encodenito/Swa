@@ -55,16 +55,21 @@ class CancelVersusProcessingRaceTest extends TestCase
             ));
             $this->assertSame(ReservationStatus::Confirmed, $reservation->fresh()->status);
 
-            $startAt = sprintf('%.4F', microtime(true) + 2.0);
+            $startAt = sprintf('%.4F', microtime(true) + 3.0);
             $env = ['APP_ENV' => 'testing', 'CACHE_STORE' => 'array', 'QUEUE_CONNECTION' => 'sync'];
             $script = base_path('tests/Concurrency/cancel_or_process.php');
 
             $cancel = Process::env($env)->start([PHP_BINARY, $script, 'cancel', $reservation->id, $customer->id, $startAt]);
             $process = Process::env($env)->start([PHP_BINARY, $script, 'process', $reservation->id, $staff->id, $startAt]);
-            $results = ['cancel' => trim($cancel->wait()->output()), 'process' => trim($process->wait()->output())];
+            $cancelRun = $cancel->wait();
+            $processRun = $process->wait();
+            // Last output line only, so a stray warning printed first cannot hide the result.
+            $last = fn (string $out) => trim((string) last(preg_split('/\R/', trim($out))));
+            $results = ['cancel' => $last($cancelRun->output()), 'process' => $last($processRun->output())];
+            $errors = trim($cancelRun->errorOutput().' '.$processRun->errorOutput());
 
             $wins = array_keys(array_filter($results, fn ($r) => $r === 'OK'));
-            $this->assertCount(1, $wins, 'Expected exactly one winner: '.json_encode($results));
+            $this->assertCount(1, $wins, 'Expected exactly one winner: '.json_encode($results).' stderr: '.$errors);
 
             $final = Reservation::find($reservation->id);
             $expected = $wins[0] === 'cancel' ? ReservationStatus::Cancelled : ReservationStatus::Processing;

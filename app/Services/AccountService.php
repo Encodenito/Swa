@@ -27,6 +27,8 @@ class AccountService
                 'password' => $password,
                 'role' => $role,
                 'email_verified_at' => now(),
+                // The admin shared this password by hand: it must be replaced on first login.
+                'must_change_password' => true,
             ])->save();
 
             $this->audit->record('user.created', $user, null, ['role' => $role->value, 'email' => $user->email], $admin);

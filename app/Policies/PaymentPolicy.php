@@ -38,4 +38,12 @@ class PaymentPolicy
     {
         return $user->isAdmin();
     }
+
+    /**
+     * Settle a refund whose outcome is unknown, after checking the PayMongo dashboard.
+     */
+    public function reconcile(User $user, Payment $payment): bool
+    {
+        return $user->isAdmin();
+    }
 }

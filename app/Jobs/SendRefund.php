@@ -10,13 +10,19 @@ use App\Services\PayMongo\PayMongoService;
 use App\Support\Money;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Sends one refund to PayMongo. Exactly one attempt: a failure becomes refund_failed and waits
- * for a person (spec K.8). No database transaction is open during the HTTP call (K.7).
+ * Sends one refund to PayMongo, at most once per claim (spec K.7, K.8).
+ *
+ *  - The row is claimed with a conditional UPDATE (refund_attempted_at) before the HTTP call, so a
+ *    second run of this job (queue:retry, a redelivered job) cannot send the same refund again.
+ *  - A definite refusal from PayMongo (4xx with an error code) becomes refund_failed; a person may
+ *    retry it from "Payments to review".
+ *  - An unknown outcome (timeout, connection error, 5xx) stays refund_pending with a note: the
+ *    refund may exist at PayMongo, so it is never resent blindly. It shows as "stuck" until an
+ *    admin reconciles it against the PayMongo dashboard.
  */
 class SendRefund implements ShouldQueue
 {
@@ -28,41 +34,33 @@ class SendRefund implements ShouldQueue
 
     public function handle(PayMongoService $payMongo, AuditLogger $audit): void
     {
-        // Guards against the same refund being sent twice by overlapping workers.
-        $lock = Cache::lock("refund:{$this->refundId}", 120);
+        $claimed = Payment::query()
+            ->whereKey($this->refundId)
+            ->where('status', PaymentStatus::RefundPending)
+            ->whereNull('refund_attempted_at')
+            ->update(['refund_attempted_at' => now(), 'updated_at' => now()]);
 
-        if (! $lock->get()) {
+        if ($claimed !== 1) {
             return;
         }
 
+        $refund = Payment::query()->with('parent', 'reservation')->findOrFail($this->refundId);
+        $notes = "Refund for reservation {$refund->reservation->reference_code}. {$refund->note}";
+
         try {
-            $refund = Payment::query()->with('parent', 'reservation')->find($this->refundId);
+            $refundRef = $payMongo->createRefund((string) $refund->parent->provider_ref, Money::toCentavos($refund->amount), $notes, $refund->id);
+        } catch (PayMongoException $e) {
+            $e->definite ? $this->markFailed($refund, $e->errorCode, $audit) : $this->markUnknown($refund, $e->errorCode, $audit);
 
-            if (! $refund || $refund->status !== PaymentStatus::RefundPending) {
-                return;
-            }
+            return;
+        } catch (Throwable $e) {
+            $this->markUnknown($refund, class_basename($e), $audit);
 
-            $original = $refund->parent;
-            $notes = "Refund for reservation {$refund->reservation->reference_code}. {$refund->note}";
-
-            try {
-                $refundRef = $payMongo->createRefund((string) $original->provider_ref, Money::toCentavos($refund->amount), $notes);
-            } catch (PayMongoException $e) {
-                $this->markFailed($refund, $e->errorCode, $audit);
-
-                return;
-            } catch (Throwable $e) {
-                $this->markFailed($refund, class_basename($e), $audit);
-                Log::error('Refund call crashed.', ['refund' => $refund->id, 'error' => $e->getMessage()]);
-
-                return;
-            }
-
-            $refund->forceFill(['status' => PaymentStatus::Refunded, 'provider_ref' => $refundRef])->save();
-            $audit->record('refund.sent', $refund, ['status' => 'refund_pending'], ['status' => 'refunded', 'provider_ref' => $refundRef]);
-        } finally {
-            $lock->release();
+            return;
         }
+
+        $refund->forceFill(['status' => PaymentStatus::Refunded, 'provider_ref' => $refundRef])->save();
+        $audit->record('refund.sent', $refund, ['status' => 'refund_pending'], ['status' => 'refunded', 'provider_ref' => $refundRef]);
     }
 
     private function markFailed(Payment $refund, string $code, AuditLogger $audit): void
@@ -73,6 +71,16 @@ class SendRefund implements ShouldQueue
         ])->save();
 
         $audit->record('refund.failed', $refund, ['status' => 'refund_pending'], ['status' => 'refund_failed', 'error' => $code]);
-        Log::warning('Refund failed; waiting for a person to retry.', ['refund' => $refund->id, 'code' => $code]);
+        Log::warning('Refund refused by PayMongo; waiting for a person to retry.', ['refund' => $refund->id, 'code' => $code]);
+    }
+
+    private function markUnknown(Payment $refund, string $code, AuditLogger $audit): void
+    {
+        $refund->forceFill([
+            'note' => mb_substr("Outcome unknown ({$code}): check PayMongo before acting. ".$refund->note, 0, 255),
+        ])->save();
+
+        $audit->record('refund.outcome_unknown', $refund, null, ['status' => 'refund_pending', 'error' => $code]);
+        Log::error('Refund outcome unknown; not resending. Reconcile against the PayMongo dashboard.', ['refund' => $refund->id, 'code' => $code]);
     }
 }

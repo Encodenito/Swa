@@ -58,7 +58,12 @@ function extend() {
 // Cancel. Staff only get [0]; admins [0, 50, 100]. The server re-checks both.
 const percents = computed(() => props.reservation.cancel.percents);
 const onlyZero = computed(() => percents.value.length === 1 && percents.value[0] === 0);
-const cancelForm = useForm({ refund_percent: percents.value.length === 1 ? percents.value[0] : (null as number | null), reason: '' });
+// expected_status: the server refuses the cancel if the reservation changed since this page loaded.
+const cancelForm = useForm({
+    refund_percent: percents.value.length === 1 ? percents.value[0] : (null as number | null),
+    reason: '',
+    expected_status: props.reservation.status,
+});
 const confirmCancel = ref(false);
 const nothingPaid = computed(() => props.reservation.status === 'pending_payment');
 
@@ -273,7 +278,10 @@ const timeline = computed(() =>
 
                     <section v-if="reservation.cancel.allowed" aria-labelledby="cancel-heading" class="rounded-lg border border-border bg-card p-4">
                         <h3 id="cancel-heading" class="font-semibold">Cancel reservation</h3>
-                        <p class="mb-3 mt-1 text-sm text-muted-foreground">The items go back on sale. The reason is kept on record.</p>
+                        <p class="mb-3 mt-1 text-sm text-muted-foreground">
+                            The items go back on sale. The reason is kept on record and the customer sees it on their reservation page and in the
+                            email.
+                        </p>
                         <form class="space-y-4" @submit.prevent="askCancel">
                             <fieldset class="space-y-2" aria-describedby="refund_percent-help refund_percent-error">
                                 <legend class="mb-1 text-sm font-medium">Refund of the downpayment</legend>

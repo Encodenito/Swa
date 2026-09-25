@@ -61,6 +61,11 @@ class AppServiceProvider extends ServiceProvider
         // Browsing and account pages (catalog search, cart edits, the payment status poll).
         RateLimiter::for('browse', fn (Request $request) => Limit::perMinute(120)->by($request->user()?->id ?: $request->ip()));
 
+        // Staff and admin writes: generous for real counter work, but a stolen session cannot script thousands.
+        RateLimiter::for('staff-writes', fn (Request $request) => Limit::perMinute(30)->by('staff:'.($request->user()?->id ?: $request->ip())));
+
+        RateLimiter::for('account-admin', fn (Request $request) => Limit::perMinute(10)->by('accounts:'.($request->user()?->id ?: $request->ip())));
+
         RateLimiter::for('paymongo-webhook', fn (Request $request) => Limit::perMinute(120)->by($request->ip()));
     }
 }

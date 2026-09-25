@@ -24,7 +24,8 @@ class StoreStaffRequest extends FormRequest
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'regex:/^(09|\+639)\d{9}$/'],
             'role' => ['required', Rule::in([Role::Staff->value, Role::Admin->value])],
-            'password' => ['required', Password::defaults()],
+            // Staff and admin accounts guard money and stock: longer temporary passwords, changed on first login.
+            'password' => ['required', Password::min(12)->letters()->numbers()],
         ];
     }
 }

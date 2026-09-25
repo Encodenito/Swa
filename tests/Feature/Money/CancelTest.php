@@ -109,9 +109,9 @@ class CancelTest extends TestCase
         app(ReservationService::class)->startProcessing($reservation);
         $staff = User::factory()->staff()->create();
 
-        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 0])->assertSessionHasErrors('reason');
-        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 100, 'reason' => 'Defective'])->assertSessionHasErrors('refund_percent');
-        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 0, 'reason' => 'Customer asked at the counter'])->assertSessionHas('success');
+        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 0, 'expected_status' => $reservation->fresh()->status->value])->assertSessionHasErrors('reason');
+        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 100, 'reason' => 'Defective', 'expected_status' => $reservation->fresh()->status->value])->assertSessionHasErrors('refund_percent');
+        $this->actingAs($staff)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 0, 'reason' => 'Customer asked at the counter', 'expected_status' => $reservation->fresh()->status->value])->assertSessionHas('success');
 
         $reservation->refresh();
         $this->assertSame(ReservationStatus::Cancelled, $reservation->status);
@@ -133,8 +133,8 @@ class CancelTest extends TestCase
         $reservation = $this->confirmedReservation();
         $admin = User::factory()->admin()->create();
 
-        $this->actingAs($admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 25, 'reason' => 'Wrong price'])->assertSessionHasErrors('refund_percent');
-        $this->actingAs($admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 50, 'reason' => 'Wrong price'])->assertSessionHas('success');
+        $this->actingAs($admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 25, 'reason' => 'Wrong price', 'expected_status' => $reservation->fresh()->status->value])->assertSessionHasErrors('refund_percent');
+        $this->actingAs($admin)->post(route('staff.reservations.cancel', $reservation), ['refund_percent' => 50, 'reason' => 'Wrong price', 'expected_status' => $reservation->fresh()->status->value])->assertSessionHas('success');
 
         $this->assertSame('150.00', $this->refund()->amount);
         $this->assertSame(50, AuditLog::where('action', 'reservation.cancelled')->sole()->after['refund_percent']);
@@ -185,7 +185,7 @@ class CancelTest extends TestCase
         $sale = app(WalkInService::class)->sell([$item->id => 1], null, null, User::factory()->staff()->create());
 
         $this->actingAs(User::factory()->admin()->create())
-            ->post(route('staff.reservations.cancel', $sale), ['refund_percent' => 0, 'reason' => 'Walk-in attempt'])
+            ->post(route('staff.reservations.cancel', $sale), ['refund_percent' => 0, 'reason' => 'Walk-in attempt', 'expected_status' => $sale->fresh()->status->value])
             ->assertForbidden();
     }
 }

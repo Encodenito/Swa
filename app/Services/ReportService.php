@@ -58,11 +58,15 @@ class ReportService
             ->where('type', PaymentType::Downpayment->value)
             ->where('status', PaymentStatus::Paid->value);
 
-        $refunded = DB::table('payments')
-            ->selectRaw('COALESCE(SUM(amount), 0)')
-            ->whereColumn('payments.reservation_id', 'reservations.id')
-            ->where('type', PaymentType::Refund->value)
-            ->where('status', '!=', PaymentStatus::RefundFailed->value);
+        // Only refunds of the paid downpayment count (not refunds of a separate payment held for review).
+        $refunded = DB::table('payments as refunds')
+            ->join('payments as originals', 'originals.id', '=', 'refunds.parent_id')
+            ->selectRaw('COALESCE(SUM(refunds.amount), 0)')
+            ->whereColumn('refunds.reservation_id', 'reservations.id')
+            ->where('refunds.type', PaymentType::Refund->value)
+            ->where('refunds.status', '!=', PaymentStatus::RefundFailed->value)
+            ->where('originals.type', PaymentType::Downpayment->value)
+            ->where('originals.status', PaymentStatus::Paid->value);
 
         $rows = Reservation::query()
             ->where('status', ReservationStatus::Forfeited)

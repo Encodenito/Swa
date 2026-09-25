@@ -110,7 +110,8 @@ class RefundService
             ->whereKey($refund->id)
             ->where('type', PaymentType::Refund)
             ->where('status', PaymentStatus::RefundFailed)
-            ->update(['status' => PaymentStatus::RefundPending, 'updated_at' => now()]);
+            // A definite refusal means nothing happened at PayMongo, so a fresh attempt may be claimed.
+            ->update(['status' => PaymentStatus::RefundPending, 'refund_attempted_at' => null, 'updated_at' => now()]);
 
         if ($claimed !== 1) {
             throw new StateConflictException('This refund is not in a failed state any more, so it was not retried.');
@@ -119,5 +120,44 @@ class RefundService
         $this->audit->record('refund.retried', $refund, ['status' => 'refund_failed', 'note' => $refund->note], ['status' => 'refund_pending'], $by);
 
         SendRefund::dispatch($refund->id);
+    }
+
+    /**
+     * Admin reconciliation of a refund whose outcome is unknown (stuck refund_pending), after
+     * checking the PayMongo dashboard (the refund carries metadata.refund_id = our id):
+     *  - $payMongoRefundId given: PayMongo has it, so record it as refunded;
+     *  - null: PayMongo has no such refund, so mark it refund_failed and the normal Retry applies.
+     * Never resends anything itself.
+     *
+     * @throws StateConflictException
+     */
+    public function reconcile(Payment $refund, ?string $payMongoRefundId, string $reason, User $admin): void
+    {
+        DB::transaction(function () use ($refund, $payMongoRefundId, $reason, $admin) {
+            $locked = Payment::query()->whereKey($refund->id)->lockForUpdate()->firstOrFail();
+
+            $stuck = $locked->type === PaymentType::Refund
+                && $locked->status === PaymentStatus::RefundPending
+                && $locked->updated_at < now()->subMinutes(PaymentReviewService::STUCK_AFTER_MINUTES);
+
+            if (! $stuck) {
+                throw new StateConflictException('Only a refund waiting for more than '.PaymentReviewService::STUCK_AFTER_MINUTES.' minutes can be reconciled.');
+            }
+
+            if ($payMongoRefundId !== null) {
+                $locked->forceFill(['status' => PaymentStatus::Refunded, 'provider_ref' => $payMongoRefundId])->save();
+            } else {
+                $locked->forceFill([
+                    'status' => PaymentStatus::RefundFailed,
+                    'note' => mb_substr('Not found at PayMongo (reconciled). '.$locked->note, 0, 255),
+                ])->save();
+            }
+
+            $this->audit->record('refund.reconciled', $locked, ['status' => 'refund_pending'], [
+                'status' => $locked->status->value,
+                'provider_ref' => $payMongoRefundId,
+                'reason' => $reason,
+            ], $admin);
+        });
     }
 }
