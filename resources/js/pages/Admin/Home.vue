@@ -3,7 +3,7 @@ import Heading from '@/components/Heading.vue';
 import QuickLink from '@/components/shop/staff/QuickLink.vue';
 import AdminLayout from '@/layouts/AdminLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ClipboardList, Cog, FolderTree, PackageCheck, PackageOpen, ScanLine, Tags, Truck } from 'lucide-vue-next';
+import { ClipboardList, Cog, FolderTree, PackageCheck, PackageOpen, ScanLine, ScrollText, Tags, TrendingUp, Truck, Users } from 'lucide-vue-next';
 
 const breadcrumbs = [{ title: 'Admin dashboard', href: route('admin.home') }];
 
@@ -25,6 +25,17 @@ const counter = [
     { title: 'Stock Receiving', description: 'Record and receive supplier deliveries.', href: route('staff.deliveries.index'), icon: Truck },
     { title: 'Stock', description: 'Batches, adjustments and clearance prices.', href: route('staff.stock.index'), icon: PackageOpen },
 ];
+
+const records = [
+    { title: 'Accounts', description: 'Add staff, change roles, or deactivate an account.', href: route('admin.users.index'), icon: Users },
+    { title: 'Reports', description: 'Sales per day, kept downpayments and slow-moving items.', href: route('admin.reports'), icon: TrendingUp },
+    {
+        title: 'Audit log',
+        description: 'Who refunded, voided, cancelled or changed prices and accounts.',
+        href: route('admin.audit-log'),
+        icon: ScrollText,
+    },
+];
 </script>
 
 <template>
@@ -43,6 +54,12 @@ const counter = [
                 <h3 id="counter-heading" class="mb-3 text-base font-semibold">Counter and stock</h3>
                 <div class="grid gap-3 sm:grid-cols-2">
                     <QuickLink v-for="link in counter" :key="link.href" v-bind="link" />
+                </div>
+            </section>
+            <section aria-labelledby="records-heading">
+                <h3 id="records-heading" class="mb-3 text-base font-semibold">Accounts and records</h3>
+                <div class="grid gap-3 sm:grid-cols-2">
+                    <QuickLink v-for="link in records" :key="link.href" v-bind="link" />
                 </div>
             </section>
         </div>
