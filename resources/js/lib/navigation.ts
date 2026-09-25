@@ -1,10 +1,15 @@
 import type { NavItem, Role } from '@/types';
 import {
+    CalendarCheck,
     ClipboardCheck,
     ClipboardList,
     Cog,
+    Contact,
     FolderTree,
+    HelpCircle,
     LayoutGrid,
+    Mail,
+    MessagesSquare,
     PackageCheck,
     PackageOpen,
     Receipt,
@@ -28,6 +33,9 @@ const staffItems = (): NavItem[] => [
     { title: 'Walk-in sale', href: route('staff.walk-ins.create'), icon: Receipt },
     { title: 'Reserve for a customer', href: route('staff.customer-reservations.create'), icon: UserPlus },
     { title: 'Payments to review', href: route('staff.payments.review'), icon: ClipboardCheck },
+    { title: 'Customers', href: route('staff.customers.index'), icon: Contact },
+    { title: 'Follow-ups', href: route('staff.follow-ups.index'), icon: CalendarCheck },
+    { title: 'Chat handoffs', href: route('staff.handoffs.index'), icon: MessagesSquare },
     { title: 'Stock Receiving', href: route('staff.deliveries.index'), icon: Truck },
     { title: 'Stock', href: route('staff.stock.index'), icon: PackageOpen },
 ];
@@ -55,6 +63,8 @@ export function navFor(area: Area): NavItem[] {
                 { title: 'Accounts', href: route('admin.users.index'), icon: Users },
                 { title: 'Reports', href: route('admin.reports'), icon: TrendingUp },
                 { title: 'Audit log', href: route('admin.audit-log'), icon: ScrollText },
+                { title: 'Messages sent', href: route('admin.messages'), icon: Mail },
+                { title: 'Chatbot FAQ', href: route('admin.faqs.index'), icon: HelpCircle },
                 { title: 'Settings', href: route('admin.settings.edit'), icon: Cog },
             ];
     }

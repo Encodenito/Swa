@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(SettingsSeeder::class);
+        $this->call([SettingsSeeder::class, ChatbotFaqSeeder::class]);
 
         if (app()->environment(['local', 'testing'])) {
             $this->call([DevAccountsSeeder::class, DemoCatalogSeeder::class]);

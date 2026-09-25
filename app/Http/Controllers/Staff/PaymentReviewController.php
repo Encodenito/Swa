@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Presenters\ReservationPresenter;
 use App\Http\Requests\Admin\ReconcileRefundRequest;
 use App\Http\Requests\Staff\ReasonRequest;
+use App\Models\OrphanPayment;
 use App\Models\Payment;
+use App\Services\OrphanPaymentService;
 use App\Services\PaymentReviewService;
 use App\Services\RefundService;
 use App\Support\Money;
@@ -50,6 +52,28 @@ class PaymentReviewController extends Controller
             'payments' => $payments,
             'canMarkReviewed' => $request->user()->isAdmin(),
             'canReconcile' => $request->user()->isAdmin(),
+            // Payments PayMongo captured for a reference that matches no reservation (admin decides).
+            'orphans' => OrphanPayment::query()
+                ->where(fn ($q) => $q->whereNull('reviewed_at')
+                    ->orWhere('refund_status', OrphanPaymentService::REFUND_FAILED)
+                    ->orWhere(fn ($p) => $p->where('refund_status', OrphanPaymentService::REFUND_PENDING)->where('updated_at', '<', $stuckBefore)))
+                ->oldest('received_at')
+                ->limit(50)
+                ->get()
+                ->map(fn (OrphanPayment $o) => [
+                    'id' => $o->id,
+                    'provider_ref' => $o->provider_ref,
+                    'reference_number' => $o->reference_number,
+                    'amount' => $o->amount,
+                    'received_at' => $o->received_at?->toIso8601String(),
+                    'refund_status' => $o->refund_status,
+                    'kind' => match (true) {
+                        $o->refund_status === OrphanPaymentService::REFUND_FAILED => 'refund_failed',
+                        $o->refund_status === OrphanPaymentService::REFUND_PENDING => 'stuck',
+                        default => 'unmatched',
+                    },
+                    'note' => $o->note,
+                ]),
         ]);
     }
 

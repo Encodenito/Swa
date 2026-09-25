@@ -20,4 +20,17 @@ class UserPolicy
     {
         return $user->isAdmin();
     }
+
+    /**
+     * CRM: staff see customer profiles (never other staff accounts through this path).
+     */
+    public function viewCustomers(User $user): bool
+    {
+        return $user->isStaff();
+    }
+
+    public function viewCustomer(User $user, User $customer): bool
+    {
+        return $user->isStaff() && $customer->isCustomer();
+    }
 }

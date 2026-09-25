@@ -19,7 +19,7 @@ class ReconcileRefundRequest extends FormRequest
     {
         return [
             'outcome' => ['required', Rule::in(['found', 'not_found'])],
-            'paymongo_refund_id' => ['required_if:outcome,found', 'nullable', 'string', 'regex:/^ref_[A-Za-z0-9]+$/', 'max:100', 'unique:payments,provider_ref'],
+            'paymongo_refund_id' => ['required_if:outcome,found', 'nullable', 'string', 'regex:/^ref_[A-Za-z0-9]+$/', 'max:100', 'unique:payments,provider_ref', 'unique:orphan_payments,refund_ref'],
             'reason' => ['required', 'string', 'min:3', 'max:255'],
         ];
     }

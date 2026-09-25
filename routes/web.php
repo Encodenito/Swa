@@ -6,14 +6,22 @@ use App\Http\Controllers\Account\ReservationController as AccountReservationCont
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BatchPriceController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\FaqController;
 use App\Http\Controllers\Admin\ItemController;
+use App\Http\Controllers\Admin\MessageLogController;
+use App\Http\Controllers\Admin\OrphanPaymentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\Staff\CustomerController;
 use App\Http\Controllers\Staff\CustomerReservationController;
+use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DeliveryController;
+use App\Http\Controllers\Staff\FollowUpController;
+use App\Http\Controllers\Staff\HandoffController;
 use App\Http\Controllers\Staff\PaymentReviewController;
 use App\Http\Controllers\Staff\PickupController;
 use App\Http\Controllers\Staff\ReservationController as StaffReservationController;
@@ -33,6 +41,12 @@ Route::get('/', function () {
 Route::middleware('throttle:browse')->group(function () {
     Route::get('items', [CatalogController::class, 'index'])->name('items.index');
     Route::get('items/{item:slug}', [CatalogController::class, 'show'])->name('items.show');
+});
+
+// Public FAQ chatbot (spec B: /chatbot/*, throttled). JSON only; answers are plain text.
+Route::prefix('chatbot')->name('chatbot.')->group(function () {
+    Route::post('ask', [ChatbotController::class, 'ask'])->middleware('throttle:chatbot-ask')->name('ask');
+    Route::post('handoff', [ChatbotController::class, 'handoff'])->middleware('throttle:chatbot-handoff')->name('handoff');
 });
 
 // Post-login landing: send each role to its own area.
@@ -62,7 +76,22 @@ Route::middleware(['auth', 'verified', 'role:customer', 'throttle:browse'])
 Route::middleware(['auth', 'verified', 'role:staff,admin'])
     ->prefix('staff')->name('staff.')
     ->group(function () {
-        Route::get('/', fn () => Inertia::render('Staff/Home'))->name('home');
+        Route::get('/', DashboardController::class)->name('home');
+
+        Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+        Route::post('customers/{customer}/notes', [CustomerController::class, 'storeNote'])->middleware('throttle:staff-writes')->name('customers.notes.store');
+        Route::delete('notes/{note}', [CustomerController::class, 'destroyNote'])->middleware('throttle:staff-writes')->name('notes.destroy');
+        Route::post('customers/{customer}/tags/{tag}', [CustomerController::class, 'attachTag'])->middleware('throttle:staff-writes')->name('customers.tags.attach');
+        Route::delete('customers/{customer}/tags/{tag}', [CustomerController::class, 'detachTag'])->middleware('throttle:staff-writes')->name('customers.tags.detach');
+        Route::post('customers/{customer}/follow-ups', [CustomerController::class, 'storeFollowUp'])->middleware('throttle:staff-writes')->name('customers.follow-ups.store');
+
+        Route::get('follow-ups', [FollowUpController::class, 'index'])->name('follow-ups.index');
+        Route::post('follow-ups/{followUp}/complete', [FollowUpController::class, 'complete'])->middleware('throttle:staff-writes')->name('follow-ups.complete');
+
+        Route::get('handoffs', [HandoffController::class, 'index'])->name('handoffs.index');
+        Route::post('handoffs/{handoff}/claim', [HandoffController::class, 'claim'])->middleware('throttle:staff-writes')->name('handoffs.claim');
+        Route::post('handoffs/{handoff}/close', [HandoffController::class, 'close'])->middleware('throttle:staff-writes')->name('handoffs.close');
 
         Route::get('reservations', [StaffReservationController::class, 'index'])->name('reservations.index');
         Route::get('reservations/{reservation}', [StaffReservationController::class, 'show'])->name('reservations.show');
@@ -131,6 +160,21 @@ Route::middleware(['auth', 'verified', 'role:admin'])
         Route::put('users/{user}/role', [UserController::class, 'role'])->middleware('throttle:account-admin')->name('users.role');
         Route::post('users/{user}/deactivate', [UserController::class, 'deactivate'])->middleware('throttle:account-admin')->name('users.deactivate');
         Route::post('users/{user}/reactivate', [UserController::class, 'reactivate'])->middleware('throttle:account-admin')->name('users.reactivate');
+
+        Route::post('tags', [CustomerController::class, 'storeTag'])->middleware('throttle:staff-writes')->name('tags.store');
+
+        Route::get('faqs', [FaqController::class, 'index'])->name('faqs.index');
+        Route::post('faqs', [FaqController::class, 'store'])->middleware('throttle:staff-writes')->name('faqs.store');
+        Route::put('faqs/{faq}', [FaqController::class, 'update'])->middleware('throttle:staff-writes')->name('faqs.update');
+        Route::delete('faqs/{faq}', [FaqController::class, 'destroy'])->middleware('throttle:staff-writes')->name('faqs.destroy');
+        Route::post('faqs/test', [FaqController::class, 'test'])->middleware('throttle:chatbot-ask')->name('faqs.test');
+
+        Route::get('messages', [MessageLogController::class, 'index'])->name('messages');
+
+        Route::post('orphans/{orphan}/refund', [OrphanPaymentController::class, 'refund'])->middleware('throttle:staff-writes')->name('orphans.refund');
+        Route::post('orphans/{orphan}/retry', [OrphanPaymentController::class, 'retry'])->middleware('throttle:staff-writes')->name('orphans.retry');
+        Route::post('orphans/{orphan}/reconcile', [OrphanPaymentController::class, 'reconcile'])->middleware('throttle:staff-writes')->name('orphans.reconcile');
+        Route::post('orphans/{orphan}/reviewed', [OrphanPaymentController::class, 'markReviewed'])->middleware('throttle:staff-writes')->name('orphans.reviewed');
 
         Route::get('reports', [ReportController::class, 'index'])->name('reports');
         Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log');
