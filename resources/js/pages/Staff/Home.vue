@@ -3,7 +3,7 @@ import Heading from '@/components/Heading.vue';
 import QuickLink from '@/components/shop/staff/QuickLink.vue';
 import StaffLayout from '@/layouts/StaffLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ClipboardList, PackageOpen, ScanLine, Truck } from 'lucide-vue-next';
+import { ClipboardCheck, ClipboardList, PackageOpen, ReceiptText, ScanLine, Truck, UserPlus } from 'lucide-vue-next';
 
 const breadcrumbs = [{ title: 'Staff dashboard', href: route('staff.home') }];
 
@@ -15,10 +15,28 @@ const links = [
         icon: ScanLine,
     },
     {
+        title: 'Walk-in sale',
+        description: 'Sell items at the counter to a customer without a reservation, paid in full in cash.',
+        href: route('staff.walk-ins.create'),
+        icon: ReceiptText,
+    },
+    {
+        title: 'Reserve for a customer',
+        description: 'Create a reservation for a customer with an account and give them the payment link.',
+        href: route('staff.customer-reservations.create'),
+        icon: UserPlus,
+    },
+    {
         title: 'Reservations',
-        description: 'Search all reservations, start preparing orders and extend pickup deadlines.',
+        description: 'Search all reservations and sales, start preparing orders, extend deadlines and cancel.',
         href: route('staff.reservations.index'),
         icon: ClipboardList,
+    },
+    {
+        title: 'Payments to review',
+        description: 'Payments PayMongo took but we could not apply, and refunds that failed or are stuck.',
+        href: route('staff.payments.review'),
+        icon: ClipboardCheck,
     },
     {
         title: 'Stock Receiving',

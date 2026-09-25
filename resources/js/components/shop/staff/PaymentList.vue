@@ -2,8 +2,10 @@
 import { formatDateTime } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
 import type { PaymentRow } from '@/types';
+import { CornerDownRight } from 'lucide-vue-next';
+import { computed } from 'vue';
 
-defineProps<{ payments: PaymentRow[] }>();
+const props = defineProps<{ payments: PaymentRow[] }>();
 
 const typeLabel: Record<PaymentRow['type'], string> = {
     downpayment: 'Downpayment',
@@ -34,23 +36,45 @@ function statusTone(status: PaymentRow['status']): string {
             return 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100';
     }
 }
+
+/** Each refund is listed right under the payment it refunds; orphans keep their own place. */
+const rows = computed(() => {
+    const ids = new Set(props.payments.map((p) => p.id));
+    const childrenOf = new Map<number, PaymentRow[]>();
+    for (const p of props.payments) {
+        if (p.parent_id !== null && ids.has(p.parent_id)) {
+            childrenOf.set(p.parent_id, [...(childrenOf.get(p.parent_id) ?? []), p]);
+        }
+    }
+
+    const out: { payment: PaymentRow; nested: boolean }[] = [];
+    for (const p of props.payments) {
+        if (p.parent_id !== null && ids.has(p.parent_id)) continue;
+        out.push({ payment: p, nested: false });
+        for (const child of childrenOf.get(p.id) ?? []) out.push({ payment: child, nested: true });
+    }
+
+    return out;
+});
 </script>
 
 <template>
     <p v-if="payments.length === 0" class="text-sm text-muted-foreground">No payments recorded yet.</p>
     <ul v-else class="space-y-2">
         <li
-            v-for="p in payments"
+            v-for="{ payment: p, nested } in rows"
             :key="p.id"
             :class="[
                 'rounded-md border p-3 text-sm',
+                nested ? 'ml-4 border-l-4' : '',
                 p.status === 'needs_review' || p.status === 'refund_failed'
                     ? 'border-red-400 bg-red-50 dark:border-red-800 dark:bg-red-950/40'
                     : 'border-border',
             ]"
         >
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <span class="font-medium">
+                <span class="flex items-center gap-1.5 font-medium">
+                    <CornerDownRight v-if="nested" class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     {{ typeLabel[p.type] }}
                     <span class="font-normal text-muted-foreground">by {{ methodLabel[p.method] }}</span>
                 </span>
@@ -59,9 +83,12 @@ function statusTone(status: PaymentRow['status']): string {
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
                 <span :class="['rounded-full px-2 py-0.5 text-xs font-semibold', statusTone(p.status)]">{{ statusLabel[p.status] }}</span>
                 <span>{{ formatDateTime(p.created_at) }}</span>
+                <span class="text-xs">Payment #{{ p.id }}</span>
+                <span v-if="p.parent_id !== null" class="text-xs">Refunds payment #{{ p.parent_id }}</span>
                 <span v-if="p.provider_ref" class="break-all font-mono text-xs">Ref {{ p.provider_ref }}</span>
             </div>
             <p v-if="p.note" class="mt-2 whitespace-pre-line text-foreground">{{ p.note }}</p>
+            <p v-if="p.reviewed_at" class="mt-1 text-xs text-muted-foreground">Reviewed {{ formatDateTime(p.reviewed_at) }}</p>
         </li>
     </ul>
 </template>

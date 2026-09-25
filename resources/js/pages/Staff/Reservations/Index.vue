@@ -12,11 +12,11 @@ import { formatDateTime, formatDeadline } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
 import type { Paginated, ReservationSummary } from '@/types';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
     reservations: Paginated<ReservationSummary>;
-    filters: { status: string | null; q: string };
+    filters: { status: string | null; type?: string | null; q: string };
     statuses: { value: string; label: string }[];
 }>();
 
@@ -25,14 +25,24 @@ const breadcrumbs = [
     { title: 'Reservations', href: route('staff.reservations.index') },
 ];
 
+const types = [
+    { value: '', label: 'All' },
+    { value: 'reservation', label: 'Reservations' },
+    { value: 'walk_in', label: 'Walk-in sales' },
+];
+
 const q = ref(props.filters.q ?? '');
 const status = ref<string>(props.filters.status ?? '');
+const type = ref<string>(props.filters.type ?? '');
 const searching = ref(false);
+
+const filtered = computed(() => !!(props.filters.q || props.filters.status || props.filters.type));
 
 function search() {
     const params: Record<string, string> = {};
     if (q.value.trim() !== '') params.q = q.value.trim();
     if (status.value !== '') params.status = status.value;
+    if (type.value !== '') params.type = type.value;
 
     router.get(route('staff.reservations.index'), params, {
         preserveState: true,
@@ -43,10 +53,29 @@ function search() {
     });
 }
 
+function setType(value: string) {
+    if (type.value === value) return;
+    type.value = value;
+    search();
+}
+
 function clear() {
     q.value = '';
     status.value = '';
+    type.value = '';
     search();
+}
+
+function detailHref(r: ReservationSummary): string {
+    return r.type === 'walk_in'
+        ? route('staff.walk-ins.show', { reservation: r.reference_code })
+        : route('staff.reservations.show', { reservation: r.reference_code });
+}
+
+function who(r: ReservationSummary): { name: string; contact: string | null } {
+    if (r.customer) return { name: r.customer.name, contact: r.customer.phone ?? r.customer.email };
+
+    return { name: r.walk_in_name ?? 'Walk-in', contact: null };
 }
 
 function deadline(r: ReservationSummary): { label: string; value: string } | null {
@@ -64,6 +93,23 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
         <div class="px-4 py-6">
             <Heading title="Reservations" description="Search by reference code, customer name, email or mobile number." />
 
+            <div role="group" aria-label="Show" class="mb-4 inline-flex w-full rounded-md border border-border bg-muted p-1 sm:w-auto">
+                <button
+                    v-for="t in types"
+                    :key="t.value"
+                    type="button"
+                    :aria-pressed="type === t.value"
+                    :disabled="searching"
+                    :class="[
+                        'h-9 flex-1 rounded px-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none',
+                        type === t.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                    ]"
+                    @click="setType(t.value)"
+                >
+                    {{ t.label }}
+                </button>
+            </div>
+
             <form role="search" class="mb-6 grid gap-3 sm:grid-cols-[1fr_14rem_auto] sm:items-end" @submit.prevent="search">
                 <div class="grid gap-1.5">
                     <Label for="reservation-search">Search</Label>
@@ -78,20 +124,18 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
                 </div>
                 <div class="flex gap-2">
                     <Button type="submit" class="h-10 flex-1 sm:flex-none" :disabled="searching">{{ searching ? 'Searching…' : 'Search' }}</Button>
-                    <Button v-if="filters.q || filters.status" type="button" variant="outline" class="h-10" :disabled="searching" @click="clear">
-                        Clear
-                    </Button>
+                    <Button v-if="filtered" type="button" variant="outline" class="h-10" :disabled="searching" @click="clear">Clear</Button>
                 </div>
             </form>
 
             <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
                 <EmptyState
                     v-if="reservations.data.length === 0"
-                    :title="filters.q || filters.status ? 'No reservations match your search' : 'No reservations yet'"
+                    :title="filtered ? 'Nothing matches your search' : 'No reservations yet'"
                     :description="
-                        filters.q || filters.status
-                            ? 'Check the reference code or try a different status.'
-                            : 'Reservations appear here as soon as customers place them.'
+                        filtered
+                            ? 'Check the reference code or try a different status or type.'
+                            : 'Reservations and walk-in sales appear here as soon as they are placed.'
                     "
                 />
 
@@ -115,18 +159,14 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
                             <tbody class="divide-y divide-border">
                                 <tr v-for="r in reservations.data" :key="r.reference_code" class="hover:bg-accent/50">
                                     <td class="px-4 py-3">
-                                        <Link
-                                            :href="route('staff.reservations.show', { reservation: r.reference_code })"
-                                            class="font-mono font-semibold underline-offset-4 hover:underline"
-                                            >{{ r.reference_code }}</Link
-                                        >
+                                        <Link :href="detailHref(r)" class="font-mono font-semibold underline-offset-4 hover:underline">{{
+                                            r.reference_code
+                                        }}</Link>
+                                        <span v-if="r.type === 'walk_in'" class="block text-xs text-muted-foreground">Walk-in sale</span>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <template v-if="r.customer">
-                                            <span class="block font-medium">{{ r.customer.name }}</span>
-                                            <span class="block text-muted-foreground">{{ r.customer.phone ?? r.customer.email }}</span>
-                                        </template>
-                                        <span v-else class="text-muted-foreground">—</span>
+                                        <span class="block font-medium">{{ who(r).name }}</span>
+                                        <span v-if="who(r).contact" class="block text-muted-foreground">{{ who(r).contact }}</span>
                                     </td>
                                     <td class="px-4 py-3"><StatusBadge :status="r.status" :label="r.status_label" /></td>
                                     <td class="px-4 py-3 text-right tabular-nums">{{ formatPeso(r.total) }}</td>
@@ -145,17 +185,17 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
                     <!-- Phone cards -->
                     <ul class="divide-y divide-border rounded-lg border border-border md:hidden">
                         <li v-for="r in reservations.data" :key="r.reference_code">
-                            <Link
-                                :href="route('staff.reservations.show', { reservation: r.reference_code })"
-                                class="block space-y-1.5 p-4 hover:bg-accent/50"
-                            >
+                            <Link :href="detailHref(r)" class="block space-y-1.5 p-4 hover:bg-accent/50">
                                 <span class="flex items-center justify-between gap-2">
                                     <span class="font-mono font-semibold">{{ r.reference_code }}</span>
                                     <StatusBadge :status="r.status" :label="r.status_label" />
                                 </span>
-                                <span v-if="r.customer" class="block text-sm">
-                                    <span class="block">{{ r.customer.name }}</span>
-                                    <span class="block text-muted-foreground">{{ r.customer.phone ?? r.customer.email }}</span>
+                                <span class="block text-sm">
+                                    <span class="block">
+                                        {{ who(r).name }}
+                                        <span v-if="r.type === 'walk_in' && r.walk_in_name" class="text-muted-foreground">(walk-in)</span>
+                                    </span>
+                                    <span v-if="who(r).contact" class="block text-muted-foreground">{{ who(r).contact }}</span>
                                 </span>
                                 <span class="flex items-center justify-between gap-2 text-sm">
                                     <span class="text-muted-foreground">

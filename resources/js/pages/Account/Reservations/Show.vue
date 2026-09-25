@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import InputError from '@/components/InputError.vue';
 import StatusBadge from '@/components/shop/StatusBadge.vue';
+import CancelReservationDialog from '@/components/shop/customer/CancelReservationDialog.vue';
 import { Button } from '@/components/ui/button';
 import AccountLayout from '@/layouts/AccountLayout.vue';
-import { formatDateTime, formatDeadline } from '@/lib/dates';
+import { formatDate, formatDateTime, formatDeadline } from '@/lib/dates';
 import { formatPeso } from '@/lib/money';
 import type { PaymentRow, ReservationDetail } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -42,6 +43,7 @@ const keyDates = computed(() => {
     if (r.pickup_by && showCode.value) rows.push({ label: 'Pick up by', value: formatDeadline(r.pickup_by) });
     if (r.completed_at) rows.push({ label: 'Picked up', value: formatDateTime(r.completed_at) });
     if (r.cancelled_at) rows.push({ label: 'Cancelled', value: formatDateTime(r.cancelled_at) });
+    if (r.forfeited_at) rows.push({ label: 'Forfeited', value: formatDateTime(r.forfeited_at) });
 
     return rows;
 });
@@ -56,10 +58,19 @@ const paymentType: Record<PaymentRow['type'], string> = {
 const paymentStatus: Record<PaymentRow['status'], string> = {
     paid: 'Paid',
     needs_review: 'Being checked',
-    refund_pending: 'Refund pending',
+    refund_pending: 'Refund on its way',
     refunded: 'Refunded',
-    refund_failed: 'Refund failed',
+    refund_failed: 'Refund delayed — we will contact you',
 };
+
+function statusTone(s: PaymentRow['status']): string {
+    if (s === 'refund_failed') return 'text-red-700 dark:text-red-400';
+    if (s === 'refund_pending' || s === 'needs_review') return 'text-amber-800 dark:text-amber-300';
+
+    return 'text-muted-foreground';
+}
+
+const hasRefund = computed(() => props.reservation.payments.some((p) => p.type === 'refund'));
 
 const paymentMethod: Record<PaymentRow['method'], string> = {
     paymongo: 'GCash or card',
@@ -116,7 +127,38 @@ function pay() {
                     <InputError :message="payError" />
                 </div>
 
-                <p v-if="reservation.cancel_reason" class="mt-4 text-sm text-muted-foreground">Reason: {{ reservation.cancel_reason }}</p>
+                <div v-if="reservation.cancel.allowed" class="mt-4 space-y-3 border-t border-border pt-4">
+                    <p class="text-sm text-muted-foreground">
+                        Changed your mind? You can cancel until we start preparing your order<template v-if="status === 'confirmed'"
+                            >, and your downpayment is refunded in full</template
+                        >.
+                    </p>
+                    <CancelReservationDialog :reservation="reservation" />
+                </div>
+
+                <div v-if="status === 'cancelled'" class="mt-4 rounded-md bg-secondary px-3 py-2 text-sm">
+                    <p class="font-medium">
+                        This reservation was cancelled<template v-if="reservation.cancelled_at">
+                            on {{ formatDate(reservation.cancelled_at) }}</template
+                        >.
+                    </p>
+                    <p v-if="reservation.cancel_reason" class="mt-1 text-muted-foreground">Reason: {{ reservation.cancel_reason }}</p>
+                    <p v-if="hasRefund" class="mt-1 text-muted-foreground">You can follow the refund under Payments below.</p>
+                </div>
+
+                <div
+                    v-else-if="status === 'forfeited'"
+                    class="mt-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
+                >
+                    <p class="font-medium">
+                        Not picked up in time<template v-if="reservation.forfeited_at"
+                            >, forfeited on {{ formatDate(reservation.forfeited_at) }}</template
+                        >.
+                    </p>
+                    <p class="mt-1">The items went back on sale. Any refund of part of your downpayment is shown under Payments below.</p>
+                </div>
+
+                <p v-else-if="reservation.cancel_reason" class="mt-4 text-sm text-muted-foreground">Reason: {{ reservation.cancel_reason }}</p>
             </header>
 
             <section aria-labelledby="items-heading" class="rounded-lg border border-border bg-card">
@@ -201,8 +243,12 @@ function pay() {
                             </p>
                         </div>
                         <div class="text-right">
-                            <p class="font-semibold tabular-nums">{{ formatPeso(payment.amount) }}</p>
-                            <p class="text-muted-foreground">{{ paymentStatus[payment.status] ?? payment.status }}</p>
+                            <p class="font-semibold tabular-nums">
+                                <span v-if="payment.type === 'refund'" class="sr-only">Refund to you: </span>
+                                <span aria-hidden="true">{{ payment.type === 'refund' ? '−' : '' }}</span
+                                >{{ formatPeso(payment.amount) }}
+                            </p>
+                            <p :class="statusTone(payment.status)">{{ paymentStatus[payment.status] ?? payment.status }}</p>
                         </div>
                     </li>
                 </ul>
