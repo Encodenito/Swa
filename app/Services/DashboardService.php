@@ -52,6 +52,7 @@ class DashboardService
                 'count' => (clone $review)->count(),
                 'needs_review' => (clone $review)->where('status', PaymentStatus::NeedsReview)->count(),
                 'refund_failed' => (clone $review)->where('status', PaymentStatus::RefundFailed)->count(),
+                'stuck' => (clone $review)->where('status', PaymentStatus::RefundPending)->count(),
                 'orphans' => app(OrphanPaymentService::class)->reviewQuery()->count(),
             ],
             'open_handoffs' => ChatHandoff::query()->where('status', ChatHandoffService::OPEN)->count(),

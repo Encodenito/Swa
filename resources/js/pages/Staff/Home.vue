@@ -29,7 +29,7 @@ defineProps<{
         pickups_today: ReservationCard;
         overdue_pickups: ReservationCard;
         expiring_soon: ReservationCard;
-        payments_to_review: { count: number; needs_review: number; refund_failed: number; orphans: number };
+        payments_to_review: { count: number; needs_review: number; refund_failed: number; stuck: number; orphans: number };
         open_handoffs: number;
         follow_ups_due: {
             count: number;
@@ -170,6 +170,8 @@ const listLink = 'block rounded-md px-2 py-1.5 -mx-2 hover:bg-accent focus-visib
                         <dd class="text-right font-medium tabular-nums">{{ summary.payments_to_review.needs_review }}</dd>
                         <dt class="text-muted-foreground">Refunds failed</dt>
                         <dd class="text-right font-medium tabular-nums">{{ summary.payments_to_review.refund_failed }}</dd>
+                        <dt class="text-muted-foreground">Refunds with no answer</dt>
+                        <dd class="text-right font-medium tabular-nums">{{ summary.payments_to_review.stuck }}</dd>
                         <dt class="text-muted-foreground">Unmatched payments</dt>
                         <dd class="text-right font-medium tabular-nums">{{ summary.payments_to_review.orphans }}</dd>
                     </dl>
