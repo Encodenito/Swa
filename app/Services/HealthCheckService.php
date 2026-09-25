@@ -76,7 +76,7 @@ class HealthCheckService
 
         $waitingRefunds = Payment::query()->where('type', PaymentType::Refund)->where('status', PaymentStatus::RefundPending)->whereNull('refund_attempted_at')->count();
         if ($waitingRefunds > 0 && $jobAge !== null && $jobAge > self::JOB_STALE_SECONDS) {
-            $checks[] = $this->fail('refunds_waiting', 'Operations', 'Refunds waiting to send', "{$waitingRefunds} refund(s) are queued but not sent.", 'Start the background worker.');
+            $checks[] = $this->fail('refunds_waiting', 'Operations', 'Refunds waiting to send', "{$waitingRefunds} refund(s) are waiting to be sent.", 'Start the background worker. Any still waiting 15 minutes later appear under Staff → Payments to review for an admin to reconcile.');
         }
 
         if (ChatbotFaq::query()->where('answer', 'like', '%(Admin: replace this answer%')->exists()) {
@@ -168,7 +168,9 @@ class HealthCheckService
         // Queue and storage
         $checks[] = $this->status(config('queue.default') === 'database', 'queue_driver', 'Server', 'Queue driver', (string) config('queue.default'), 'Set QUEUE_CONNECTION=database.', fail: true);
 
-        $checks[] = $this->status(is_link(public_path('storage')) || is_dir(public_path('storage')), 'storage_link', 'Server', 'Image storage link', is_link(public_path('storage')) || is_dir(public_path('storage')) ? 'Present.' : 'Missing: item photos will not show.', 'Run `php artisan storage:link`.', fail: true);
+        // file_exists, not is_link/is_dir: Windows junctions (what storage:link makes on XAMPP) fail those.
+        $linked = file_exists(public_path('storage'));
+        $checks[] = $this->status($linked, 'storage_link', 'Server', 'Image storage link', $linked ? 'Present.' : 'Missing: item photos will not show.', 'Run `php artisan storage:link`.', fail: true);
 
         $writable = is_writable(storage_path()) && is_writable(base_path('bootstrap/cache'));
         $checks[] = $this->status($writable, 'writable', 'Server', 'Writable folders', $writable ? 'storage and bootstrap/cache are writable.' : 'storage or bootstrap/cache is not writable.', 'Give the web server write access to storage/ and bootstrap/cache/.', fail: true);
