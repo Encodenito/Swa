@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import FlashMessages from '@/components/shop/FlashMessages.vue';
+import ChatWidget from '@/components/shop/chat/ChatWidget.vue';
 import type { SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ShoppingCart } from 'lucide-vue-next';
@@ -87,6 +88,7 @@ const page = usePage<SharedData>();
                 </div>
                 <p class="sm:text-right">Prices in Philippine pesos (₱). Reserve online with a downpayment, pay the balance at the counter.</p>
             </div>
+            <ChatWidget />
         </footer>
     </div>
 </template>
