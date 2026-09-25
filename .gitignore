@@ -22,3 +22,9 @@ yarn-error.log
 /.vscode
 /.zed
 /.playwright-mcp
+
+# Personal Claude Code setup (design plugin, local settings); the project's agents and skills stay tracked.
+/.claude/settings.local.json
+/.claude/agents/impeccable-*.md
+/.claude/skills/impeccable/
+/.impeccable
