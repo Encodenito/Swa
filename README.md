@@ -116,10 +116,64 @@ php artisan swa:create-admin owner@example.com --name="Shop Owner"
 
 It prompts for a password. Run it on an existing email to promote that account to admin.
 
-Later phases add sections on verifying a Resend domain and backups.
+## Background workers and scheduled jobs
+
+Emails and PayMongo refunds are queued, so `php artisan queue:work` must be running. Without a worker nothing is sent; refunds wait as "refund pending". Scheduled jobs (`php artisan schedule:list`):
+
+| Command | When | What it does |
+|---|---|---|
+| `reservations:expire` | every minute | Expires unpaid reservations and returns their stock |
+| `reservations:forfeit` | hourly | Ends reservations past their pickup deadline, returns the stock, refunds `forfeit_refund_percent`% |
+| `reservations:remind` | daily 08:00 | Emails (and logs an SMS) for pickups due within 24 hours, once per reservation |
+
+Refunds are **never retried automatically**. A refund PayMongo refuses shows under **Staff → Payments to review**, and a person presses **Retry refund** once the cause is fixed (for example after topping up the PayMongo balance). The same screen shows payments that arrived after a reservation expired (**Refund in full**), and refunds with no answer after 15 minutes (check the PayMongo dashboard before acting).
+
+## Emails with Resend
+
+In development `MAIL_MAILER=log`, so every email is written to `storage/logs/laravel.log`. To send real emails:
+
+1. In Resend, **add and verify your domain** (Domains → Add domain). Add the DNS records it shows (SPF/DKIM) at your domain host and wait until Resend shows *Verified*. Until then Resend only delivers to your own Resend account address.
+2. Create an API key with **Sending access** only, and put it in `.env` as `RESEND_KEY`.
+3. In `.env` set `MAIL_MAILER=resend` and `MAIL_FROM_ADDRESS` to an address **on the verified domain** (for example `reservations@yourshop.ph`), then run `php artisan config:clear`.
+4. Test with a single email to yourself:
+
+   ```bash
+   php artisan tinker --execute="Illuminate\Support\Facades\Mail::raw('Resend test from SWA', fn (\$m) => \$m->to('you@example.com')->subject('SWA test'));"
+   ```
+
+The API key is secret: keep it only in `.env`, never in git or chat. Walk-in customers never receive email.
+
+## Backups
+
+No backup package is installed; these are manual steps (ask before adding a package).
+
+**What to back up:** the database `swa_reservations` and the uploaded images in `storage/app/public`. `.env` holds secrets; keep a copy somewhere safe, but separately from the other backups.
+
+**Back up** (run from the project folder in Git Bash):
+
+```bash
+mkdir -p ~/swa-backups
+STAMP=$(date +%Y%m%d-%H%M)
+/c/xampp/mysql/bin/mysqldump -u root --single-transaction --routines swa_reservations > ~/swa-backups/swa-$STAMP.sql
+tar -czf ~/swa-backups/swa-images-$STAMP.tar.gz storage/app/public
+```
+
+**Schedule it daily** with Windows Task Scheduler: create a basic task that runs `"C:\Program Files\Git\bin\bash.exe" -c "cd /c/xampp/htdocs/SWA && ./backup.sh"` after saving the commands above as `backup.sh`. Copy the backup folder to a second place (external drive or cloud storage) regularly, and delete backups older than 30 days.
+
+**Restore** (this overwrites the database, so try it on a copy first):
+
+```bash
+/c/xampp/mysql/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS swa_reservations CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+/c/xampp/mysql/bin/mysql -u root swa_reservations < ~/swa-backups/swa-YYYYMMDD-HHMM.sql
+tar -xzf ~/swa-backups/swa-images-YYYYMMDD-HHMM.tar.gz
+php artisan storage:link
+```
+
+Test a restore at least once before relying on the backups.
 
 ## Before going to production
 
 - Never copy `.env.example` as-is: set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true` and a real `APP_URL`.
 - Seed with `php artisan db:seed --class=SettingsSeeder`, not `migrate --seed`. The dev accounts are refused outside `local`/`testing`, but only if `APP_ENV` is set correctly.
-- Create the first admin with `php artisan swa:create-admin`. Customers cannot delete their own accounts. Deactivation (`users.deactivated_at`) blocks login today; the admin screen for it comes in Phase 2.
+- Create the first admin with `php artisan swa:create-admin`, then manage staff under Admin → Accounts. Customers cannot delete their own accounts; admins deactivate accounts instead (history is kept).
+- Run `php artisan queue:work` and the scheduler (`php artisan schedule:run` every minute from cron or Task Scheduler) under a process manager.

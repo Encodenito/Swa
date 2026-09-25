@@ -41,6 +41,12 @@ class PageSmokeTest extends TestCase
             'edit item' => ['admin', '/admin/items/acer-aspire-5-a515/edit'],
             'categories' => ['admin', '/admin/categories'],
             'settings' => ['admin', '/admin/settings'],
+            'walk-in sale' => ['staff', '/staff/walk-ins/create'],
+            'reserve for a customer' => ['staff', '/staff/customer-reservations/create'],
+            'payments to review' => ['staff', '/staff/payments/review'],
+            'accounts' => ['admin', '/admin/users'],
+            'reports' => ['admin', '/admin/reports'],
+            'audit log' => ['admin', '/admin/audit-log'],
             'profile' => ['customer', '/settings/profile'],
         ];
     }
