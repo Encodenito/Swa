@@ -61,13 +61,24 @@ return Application::configure(basePath: dirname(__DIR__))
             $status = $response->getStatusCode();
 
             if (in_array($status, [403, 404, 500, 503], true) && ! config('app.debug') && ! $request->expectsJson()) {
-                return Inertia::render('Error', ['status' => $status])
-                    ->toResponse($request)
-                    ->setStatusCode($status);
+                try {
+                    $friendly = Inertia::render('Error', ['status' => $status])
+                        ->toResponse($request)
+                        ->setStatusCode($status);
+                } catch (Throwable) {
+                    // If the error page itself breaks (e.g. missing build), keep the plain framework page.
+                    return $response;
+                }
+
+                if ($response->headers->has('Retry-After')) {
+                    $friendly->headers->set('Retry-After', $response->headers->get('Retry-After'));
+                }
+
+                return $friendly;
             }
 
             if ($status === 419 && ! $request->expectsJson()) {
-                return back()->with('error', 'Your session expired. Please try again.');
+                return back(303)->with('error', 'Your session expired. Please try again.');
             }
 
             return $response;
