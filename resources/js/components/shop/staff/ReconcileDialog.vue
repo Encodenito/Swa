@@ -41,7 +41,7 @@ function submit() {
             </DialogHeader>
 
             <form :id="`reconcile-${refundId}`" class="space-y-4" @submit.prevent="submit">
-                <fieldset class="space-y-2">
+                <fieldset class="space-y-2" :aria-describedby="`reconcile-outcome-error-${refundId}`">
                     <legend class="text-sm font-medium">What does PayMongo show?</legend>
                     <label class="flex items-start gap-3 rounded-md border border-border p-3">
                         <input v-model="form.outcome" type="radio" value="found" class="mt-1" />
@@ -51,25 +51,34 @@ function submit() {
                         <input v-model="form.outcome" type="radio" value="not_found" class="mt-1" />
                         <span>There is no such refund. Mark it failed so it can be retried.</span>
                     </label>
-                    <InputError :message="form.errors.outcome" />
+                    <InputError :id="`reconcile-outcome-error-${refundId}`" :message="form.errors.outcome" />
                 </fieldset>
 
                 <div v-if="form.outcome === 'found'" class="space-y-1">
                     <Label :for="`reconcile-ref-${refundId}`">PayMongo refund id</Label>
                     <Input
                         :id="`reconcile-ref-${refundId}`"
+                        :aria-invalid="!!form.errors.paymongo_refund_id || undefined"
+                        :aria-describedby="`reconcile-ref-error-${refundId}`"
                         v-model="form.paymongo_refund_id"
                         placeholder="ref_…"
                         autocomplete="off"
                         class="font-mono"
                     />
-                    <InputError :message="form.errors.paymongo_refund_id" />
+                    <InputError :id="`reconcile-ref-error-${refundId}`" :message="form.errors.paymongo_refund_id" />
                 </div>
 
                 <div class="space-y-1">
                     <Label :for="`reconcile-reason-${refundId}`">Reason</Label>
-                    <TextArea :id="`reconcile-reason-${refundId}`" v-model="form.reason" rows="2" placeholder="What you checked in the dashboard" />
-                    <InputError :message="form.errors.reason" />
+                    <TextArea
+                        :id="`reconcile-reason-${refundId}`"
+                        :aria-invalid="!!form.errors.reason || undefined"
+                        :aria-describedby="`reconcile-reason-error-${refundId}`"
+                        v-model="form.reason"
+                        rows="2"
+                        placeholder="What you checked in the dashboard"
+                    />
+                    <InputError :id="`reconcile-reason-error-${refundId}`" :message="form.errors.reason" />
                 </div>
             </form>
 

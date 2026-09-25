@@ -31,20 +31,42 @@ const submit = () => {
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">Name</Label>
-                    <Input id="name" type="text" required autofocus tabindex="1" autocomplete="name" v-model="form.name" placeholder="Full name" />
-                    <InputError :message="form.errors.name" />
+                    <Input
+                        id="name"
+                        :aria-invalid="!!form.errors.name || undefined"
+                        aria-describedby="name-error"
+                        type="text"
+                        required
+                        autofocus
+                        tabindex="1"
+                        autocomplete="name"
+                        v-model="form.name"
+                        placeholder="Full name"
+                    />
+                    <InputError id="name-error" :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
-                    <Input id="email" type="email" required tabindex="2" autocomplete="email" v-model="form.email" placeholder="email@example.com" />
-                    <InputError :message="form.errors.email" />
+                    <Input
+                        id="email"
+                        :aria-invalid="!!form.errors.email || undefined"
+                        aria-describedby="email-error"
+                        type="email"
+                        required
+                        tabindex="2"
+                        autocomplete="email"
+                        v-model="form.email"
+                        placeholder="email@example.com"
+                    />
+                    <InputError id="email-error" :message="form.errors.email" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="phone">Mobile number (optional)</Label>
                     <Input
                         id="phone"
+                        :aria-invalid="!!form.errors.phone || undefined"
                         type="tel"
                         inputmode="tel"
                         tabindex="3"
@@ -52,16 +74,18 @@ const submit = () => {
                         maxlength="13"
                         v-model="form.phone"
                         placeholder="09171234567"
-                        aria-describedby="phone-hint"
+                        aria-describedby="phone-hint phone-error"
                     />
                     <p id="phone-hint" class="text-xs text-muted-foreground">So we can text you about pickup.</p>
-                    <InputError :message="form.errors.phone" />
+                    <InputError id="phone-error" :message="form.errors.phone" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input
                         id="password"
+                        :aria-invalid="!!form.errors.password || undefined"
+                        aria-describedby="password-error"
                         type="password"
                         required
                         tabindex="4"
@@ -69,13 +93,15 @@ const submit = () => {
                         v-model="form.password"
                         placeholder="Password"
                     />
-                    <InputError :message="form.errors.password" />
+                    <InputError id="password-error" :message="form.errors.password" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="password_confirmation">Confirm password</Label>
                     <Input
                         id="password_confirmation"
+                        :aria-invalid="!!form.errors.password_confirmation || undefined"
+                        aria-describedby="password_confirmation-error"
                         type="password"
                         required
                         tabindex="5"
@@ -83,7 +109,7 @@ const submit = () => {
                         v-model="form.password_confirmation"
                         placeholder="Confirm password"
                     />
-                    <InputError :message="form.errors.password_confirmation" />
+                    <InputError id="password_confirmation-error" :message="form.errors.password_confirmation" />
                 </div>
 
                 <div class="space-y-1 rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">

@@ -155,7 +155,7 @@ function receive() {
                                     <span class="font-semibold">{{ line.quantity_received ?? '—' }}</span>
                                     <span
                                         v-if="line.quantity_received !== null && line.quantity_received < line.quantity_ordered"
-                                        class="block text-xs text-amber-700 dark:text-amber-400"
+                                        class="block text-xs text-warning"
                                         >Short {{ line.quantity_ordered - line.quantity_received }}</span
                                     >
                                 </td>

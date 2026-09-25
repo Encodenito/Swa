@@ -72,7 +72,7 @@ function itemCount(r: ReservationSummary): string | null {
                             </p>
                             <p
                                 v-if="reservation.status === 'pending_payment' && reservation.expires_at"
-                                class="text-sm font-medium text-amber-800 dark:text-amber-300"
+                                class="text-sm font-medium text-warning-strong"
                             >
                                 Pay by {{ formatDateTime(reservation.expires_at) }}
                             </p>

@@ -351,7 +351,7 @@ const periodLabel = computed(() => `${formatDate(props.filters.from)} to ${forma
                                         </td>
                                         <td class="px-4 py-3 text-right tabular-nums">{{ item.available }}</td>
                                         <td class="px-4 py-3">
-                                            <span :class="['block', item.last_sale_at ? '' : 'font-medium text-amber-700 dark:text-amber-400']">{{
+                                            <span :class="['block', item.last_sale_at ? '' : 'font-medium text-warning']">{{
                                                 sinceLabel(item)
                                             }}</span>
                                             <span v-if="item.last_sale_at" class="block text-muted-foreground">{{
@@ -369,10 +369,9 @@ const periodLabel = computed(() => `${formatDate(props.filters.from)} to ${forma
                                     <span class="block font-medium">{{ item.name }}</span>
                                     <span v-if="item.sku" class="block font-mono text-xs text-muted-foreground">{{ item.sku }}</span>
                                     <span class="flex items-baseline justify-between gap-2 text-sm">
-                                        <span
-                                            :class="item.last_sale_at ? 'text-muted-foreground' : 'font-medium text-amber-700 dark:text-amber-400'"
-                                            >{{ sinceLabel(item) }}</span
-                                        >
+                                        <span :class="item.last_sale_at ? 'text-muted-foreground' : 'font-medium text-warning'">{{
+                                            sinceLabel(item)
+                                        }}</span>
                                         <span class="tabular-nums">{{ item.available }} available</span>
                                     </span>
                                 </Link>

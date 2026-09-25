@@ -38,14 +38,26 @@ const submit = () => {
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="email">Email</Label>
-                    <Input id="email" type="email" name="email" autocomplete="email" v-model="form.email" class="mt-1 block w-full" readonly />
-                    <InputError :message="form.errors.email" class="mt-2" />
+                    <Input
+                        id="email"
+                        :aria-invalid="!!form.errors.email || undefined"
+                        aria-describedby="email-error"
+                        type="email"
+                        name="email"
+                        autocomplete="email"
+                        v-model="form.email"
+                        class="mt-1 block w-full"
+                        readonly
+                    />
+                    <InputError id="email-error" :message="form.errors.email" class="mt-2" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="password">Password</Label>
                     <Input
                         id="password"
+                        :aria-invalid="!!form.errors.password || undefined"
+                        aria-describedby="password-error"
                         type="password"
                         name="password"
                         autocomplete="new-password"
@@ -54,13 +66,15 @@ const submit = () => {
                         autofocus
                         placeholder="Password"
                     />
-                    <InputError :message="form.errors.password" />
+                    <InputError id="password-error" :message="form.errors.password" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="password_confirmation"> Confirm Password </Label>
                     <Input
                         id="password_confirmation"
+                        :aria-invalid="!!form.errors.password_confirmation || undefined"
+                        aria-describedby="password_confirmation-error"
                         type="password"
                         name="password_confirmation"
                         autocomplete="new-password"
@@ -68,7 +82,7 @@ const submit = () => {
                         class="mt-1 block w-full"
                         placeholder="Confirm password"
                     />
-                    <InputError :message="form.errors.password_confirmation" />
+                    <InputError id="password_confirmation-error" :message="form.errors.password_confirmation" />
                 </div>
 
                 <Button type="submit" class="mt-4 w-full" :disabled="form.processing">

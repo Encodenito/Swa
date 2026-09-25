@@ -130,7 +130,7 @@ function runTest() {
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    class="h-9 text-red-700 hover:text-red-800 dark:text-red-400"
+                                    class="h-9 text-danger hover:text-danger-strong"
                                     @click="askDelete(faq)"
                                 >
                                     <Trash2 class="size-4" aria-hidden="true" />
@@ -174,10 +174,7 @@ function runTest() {
                             <p class="text-xs font-semibold text-muted-foreground">Answers with: {{ test.result.question }}</p>
                             <p class="mt-1 whitespace-pre-line break-words">{{ test.result.answer }}</p>
                         </div>
-                        <p
-                            v-else
-                            class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
-                        >
+                        <p v-else class="rounded-md border border-warning-border bg-warning-surface px-3 py-2 text-warning-strong">
                             No FAQ scores high enough. The chat says "I'm not sure about that one." and offers a person.
                         </p>
                         <p v-if="test.result.related.length" class="text-muted-foreground">Also suggested: {{ test.result.related.join('; ') }}</p>
@@ -200,9 +197,7 @@ function runTest() {
                                 <tr v-for="row in test.scores" :key="row.id" class="border-b border-border last:border-0">
                                     <td class="py-1.5 pr-2">{{ row.question }}</td>
                                     <td class="py-1.5 text-right tabular-nums">
-                                        <span :class="row.score >= test.threshold ? 'font-semibold text-emerald-700 dark:text-emerald-400' : ''">{{
-                                            row.score
-                                        }}</span>
+                                        <span :class="row.score >= test.threshold ? 'font-semibold text-success' : ''">{{ row.score }}</span>
                                         <span v-if="row.score >= test.threshold" class="sr-only"> (high enough)</span>
                                     </td>
                                 </tr>

@@ -28,9 +28,7 @@ const subtitle = computed(() => [props.item.brand, props.item.model].filter(Bool
             <div class="mt-auto flex flex-wrap items-end justify-between gap-2 pt-3">
                 <PriceTag :price="item.current_price" :regular-price="item.clearance ? item.price : null" :clearance="item.clearance" />
                 <span v-if="soldOut" class="text-sm font-semibold text-muted-foreground">Sold out</span>
-                <span v-else-if="item.low_stock" class="text-sm font-semibold text-amber-700 dark:text-amber-400"
-                    >Only {{ item.available }} left</span
-                >
+                <span v-else-if="item.low_stock" class="text-sm font-semibold text-warning">Only {{ item.available }} left</span>
             </div>
         </div>
     </Link>

@@ -70,6 +70,8 @@ const updatePassword = () => {
                         <Label for="current_password">Current Password</Label>
                         <Input
                             id="current_password"
+                            :aria-invalid="!!form.errors.current_password || undefined"
+                            aria-describedby="current_password-error"
                             ref="currentPasswordInput"
                             v-model="form.current_password"
                             type="password"
@@ -77,13 +79,15 @@ const updatePassword = () => {
                             autocomplete="current-password"
                             placeholder="Current password"
                         />
-                        <InputError :message="form.errors.current_password" />
+                        <InputError id="current_password-error" :message="form.errors.current_password" />
                     </div>
 
                     <div class="grid gap-2">
                         <Label for="password">New password</Label>
                         <Input
                             id="password"
+                            :aria-invalid="!!form.errors.password || undefined"
+                            aria-describedby="password-error"
                             ref="passwordInput"
                             v-model="form.password"
                             type="password"
@@ -91,20 +95,22 @@ const updatePassword = () => {
                             autocomplete="new-password"
                             placeholder="New password"
                         />
-                        <InputError :message="form.errors.password" />
+                        <InputError id="password-error" :message="form.errors.password" />
                     </div>
 
                     <div class="grid gap-2">
                         <Label for="password_confirmation">Confirm password</Label>
                         <Input
                             id="password_confirmation"
+                            :aria-invalid="!!form.errors.password_confirmation || undefined"
+                            aria-describedby="password_confirmation-error"
                             v-model="form.password_confirmation"
                             type="password"
                             class="mt-1 block w-full"
                             autocomplete="new-password"
                             placeholder="Confirm password"
                         />
-                        <InputError :message="form.errors.password_confirmation" />
+                        <InputError id="password_confirmation-error" :message="form.errors.password_confirmation" />
                     </div>
 
                     <div class="flex items-center gap-4">

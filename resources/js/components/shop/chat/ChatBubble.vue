@@ -16,7 +16,7 @@ const emit = defineEmits<{ ask: [question: string]; handoff: [] }>();
                 turn.from === 'user'
                     ? 'rounded-br-md bg-primary text-primary-foreground'
                     : turn.tone === 'error'
-                      ? 'rounded-bl-md border border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'
+                      ? 'rounded-bl-md border border-warning-border bg-warning-surface text-warning-strong'
                       : 'rounded-bl-md bg-muted text-foreground',
             ]"
         >

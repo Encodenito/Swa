@@ -72,10 +72,7 @@ function addToCart() {
                             :clearance="item.clearance"
                         />
                     </div>
-                    <p
-                        class="text-sm font-medium"
-                        :class="soldOut ? 'text-muted-foreground' : item.low_stock ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'"
-                    >
+                    <p class="text-sm font-medium" :class="soldOut ? 'text-muted-foreground' : item.low_stock ? 'text-warning' : 'text-foreground'">
                         <template v-if="soldOut">Sold out</template>
                         <template v-else-if="item.low_stock">Only {{ item.available }} left</template>
                         <template v-else>In stock, {{ item.available }} available</template>
@@ -94,10 +91,10 @@ function addToCart() {
                                 :max="maxSelectable"
                                 :disabled="form.processing"
                                 :invalid="Boolean(form.errors.quantity)"
-                                describedby="quantity-hint"
+                                describedby="quantity-hint quantity-error"
                             />
                             <p id="quantity-hint" class="text-xs text-muted-foreground">Up to {{ maxSelectable }} per reservation.</p>
-                            <InputError :message="form.errors.quantity" />
+                            <InputError id="quantity-error" :message="form.errors.quantity" />
                             <InputError :message="form.errors.item_id" />
                         </div>
                         <Button type="submit" class="h-11 w-full sm:w-auto sm:px-6" :disabled="soldOut || form.processing">

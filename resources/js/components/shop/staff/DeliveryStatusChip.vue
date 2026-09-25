@@ -6,8 +6,8 @@ const props = defineProps<{ status: string }>();
 const chip = computed(
     () =>
         ({
-            ordered: { label: 'Ordered', tone: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100' },
-            received: { label: 'Received', tone: 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100' },
+            ordered: { label: 'Ordered', tone: 'bg-warning-chip text-warning-strong' },
+            received: { label: 'Received', tone: 'bg-success-chip text-success-strong' },
             cancelled: { label: 'Cancelled', tone: 'bg-muted text-muted-foreground' },
         })[props.status] ?? { label: props.status, tone: 'bg-muted text-muted-foreground' },
 );

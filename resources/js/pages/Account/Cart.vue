@@ -104,7 +104,7 @@ function reserve() {
 
             <div
                 v-if="cart.problems.length > 0"
-                class="mt-5 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
+                class="mt-5 rounded-md border border-warning-border bg-warning-surface p-4 text-warning-strong"
                 aria-live="polite"
             >
                 <div class="flex gap-3">

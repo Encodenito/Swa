@@ -24,15 +24,10 @@ watch(
     <div aria-live="polite" class="sticky top-[var(--flash-top,0.5rem)] z-30 space-y-2">
         <p
             v-if="success"
-            class="flex items-start gap-3 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-100"
+            class="flex items-start gap-3 rounded-md border border-success-border bg-success-surface px-4 py-3 text-sm text-success-strong shadow-sm"
         >
             <span class="flex-1">{{ success }}</span>
-            <button
-                type="button"
-                class="-m-1 rounded p-1 hover:bg-emerald-100 dark:hover:bg-emerald-900"
-                aria-label="Dismiss message"
-                @click="success = null"
-            >
+            <button type="button" class="-m-1 rounded p-1 hover:bg-success-chip" aria-label="Dismiss message" @click="success = null">
                 <X class="size-4" />
             </button>
         </p>

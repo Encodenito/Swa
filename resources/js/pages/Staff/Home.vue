@@ -121,7 +121,7 @@ const listLink = 'block rounded-md px-2 py-1.5 -mx-2 hover:bg-accent focus-visib
                             <Link :href="pickupHref(r.reference_code)" :class="listLink">
                                 <span class="flex items-center justify-between gap-2">
                                     <span class="font-mono font-semibold">{{ r.reference_code }}</span>
-                                    <span class="text-xs text-red-700 dark:text-red-400">Due {{ formatDate(r.when) }}</span>
+                                    <span class="text-xs text-danger">Due {{ formatDate(r.when) }}</span>
                                 </span>
                                 <span class="flex justify-between gap-2 text-muted-foreground">
                                     <span class="truncate">{{ r.customer ?? 'Customer' }}</span>
@@ -235,7 +235,7 @@ const listLink = 'block rounded-md px-2 py-1.5 -mx-2 hover:bg-accent focus-visib
                                     <span
                                         :class="[
                                             'shrink-0 text-xs font-semibold tabular-nums',
-                                            item.available === 0 ? 'text-red-700 dark:text-red-400' : 'text-amber-800 dark:text-amber-300',
+                                            item.available === 0 ? 'text-danger' : 'text-warning-strong',
                                         ]"
                                     >
                                         {{ item.available === 0 ? 'Out of stock' : `${item.available} left` }}

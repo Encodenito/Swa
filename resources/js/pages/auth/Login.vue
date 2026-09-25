@@ -41,6 +41,8 @@ const submit = () => {
                     <Label for="email">Email address</Label>
                     <Input
                         id="email"
+                        :aria-invalid="!!form.errors.email || undefined"
+                        aria-describedby="email-error"
                         type="email"
                         required
                         autofocus
@@ -49,7 +51,7 @@ const submit = () => {
                         v-model="form.email"
                         placeholder="email@example.com"
                     />
-                    <InputError :message="form.errors.email" />
+                    <InputError id="email-error" :message="form.errors.email" />
                 </div>
 
                 <div class="grid gap-2">
@@ -61,6 +63,8 @@ const submit = () => {
                     </div>
                     <Input
                         id="password"
+                        :aria-invalid="!!form.errors.password || undefined"
+                        aria-describedby="password-error"
                         type="password"
                         required
                         tabindex="2"
@@ -68,7 +72,7 @@ const submit = () => {
                         v-model="form.password"
                         placeholder="Password"
                     />
-                    <InputError :message="form.errors.password" />
+                    <InputError id="password-error" :message="form.errors.password" />
                 </div>
 
                 <div class="flex items-center justify-between" tabindex="3">

@@ -25,7 +25,28 @@ html {
         --accent-foreground: 221 51% 16%;
         --destructive: 3 65% 48%;
         --destructive-foreground: 0 0% 98%;
-        --success: 142 72% 27%;
+        /* Status tones: base = text and icons (AA on page and card), surface/border = alert panels,
+           chip/strong = badges and panel text. Use these, not raw red/amber/emerald/blue classes. */
+        --danger: 0 74% 42%;
+        --danger-surface: 0 86% 97%;
+        --danger-border: 0 94% 82%;
+        --danger-chip: 0 93% 94%;
+        --danger-strong: 0 63% 31%;
+        --warning: 26 90% 37%;
+        --warning-surface: 48 100% 96%;
+        --warning-border: 46 97% 65%;
+        --warning-chip: 48 96% 89%;
+        --warning-strong: 22 78% 26%;
+        --success: 163 94% 24%;
+        --success-surface: 152 81% 96%;
+        --success-border: 156 72% 67%;
+        --success-chip: 149 80% 90%;
+        --success-strong: 164 86% 16%;
+        --info: 224 76% 48%;
+        --info-surface: 214 100% 97%;
+        --info-border: 212 96% 78%;
+        --info-chip: 214 95% 93%;
+        --info-strong: 224 64% 33%;
         --border: 217 22% 89%;
         /* Field edges need 3:1 against white (WCAG 1.4.11). */
         --input: 218 14% 58%;
@@ -67,7 +88,26 @@ html {
         --accent-foreground: 210 40% 96%;
         --destructive: 0 80% 62%;
         --destructive-foreground: 221 51% 10%;
-        --success: 142 55% 58%;
+        --danger: 0 91% 71%;
+        --danger-surface: 333 37% 10%;
+        --danger-border: 0 70% 35%;
+        --danger-chip: 345 42% 16%;
+        --danger-strong: 0 93% 94%;
+        --warning: 43 96% 56%;
+        --warning-surface: 1 23% 12%;
+        --warning-border: 23 83% 31%;
+        --warning-chip: 13 34% 17%;
+        --warning-strong: 48 96% 89%;
+        --success: 158 64% 52%;
+        --success-surface: 192 57% 9%;
+        --success-border: 163 88% 20%;
+        --success-chip: 182 60% 11%;
+        --success-strong: 149 80% 90%;
+        --info: 213 94% 68%;
+        --info-surface: 225 51% 14%;
+        --info-border: 226 71% 40%;
+        --info-chip: 224 57% 19%;
+        --info-strong: 214 95% 93%;
         --border: 222 28% 19%;
         --input: 220 16% 42%;
         --ring: 224 80% 66%;

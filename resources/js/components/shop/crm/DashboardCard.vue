@@ -23,15 +23,9 @@ const props = withDefaults(
 
 const headingId = computed(() => `card-${props.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`);
 
-const border = computed(() =>
-    props.attention === 'red' ? 'border-red-300 dark:border-red-800' : props.attention === 'amber' ? 'border-amber-300 dark:border-amber-700' : '',
-);
+const border = computed(() => (props.attention === 'red' ? 'border-danger-border' : props.attention === 'amber' ? 'border-warning-border' : ''));
 
-const badge = computed(() =>
-    props.attention === 'red'
-        ? 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100'
-        : 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100',
-);
+const badge = computed(() => (props.attention === 'red' ? 'bg-danger-chip text-danger-strong' : 'bg-warning-chip text-warning-strong'));
 </script>
 
 <template>

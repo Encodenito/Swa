@@ -33,8 +33,18 @@ const submit = () => {
             <form @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
-                    <Input id="email" type="email" name="email" autocomplete="off" v-model="form.email" autofocus placeholder="email@example.com" />
-                    <InputError :message="form.errors.email" />
+                    <Input
+                        id="email"
+                        :aria-invalid="!!form.errors.email || undefined"
+                        aria-describedby="email-error"
+                        type="email"
+                        name="email"
+                        autocomplete="off"
+                        v-model="form.email"
+                        autofocus
+                        placeholder="email@example.com"
+                    />
+                    <InputError id="email-error" :message="form.errors.email" />
                 </div>
 
                 <div class="my-6 flex items-center justify-start">

@@ -30,6 +30,8 @@ const submit = () => {
                     <Label htmlFor="password">Password</Label>
                     <Input
                         id="password"
+                        :aria-invalid="!!form.errors.password || undefined"
+                        aria-describedby="password-error"
                         type="password"
                         class="mt-1 block w-full"
                         v-model="form.password"
@@ -38,7 +40,7 @@ const submit = () => {
                         autofocus
                     />
 
-                    <InputError :message="form.errors.password" />
+                    <InputError id="password-error" :message="form.errors.password" />
                 </div>
 
                 <div class="flex items-center">

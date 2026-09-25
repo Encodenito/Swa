@@ -7,24 +7,14 @@ defineProps<{ checks: HealthCheck[] }>();
 </script>
 
 <template>
-    <section
-        v-if="checks.length"
-        aria-labelledby="health-heading"
-        class="mb-6 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/40"
-    >
-        <h2 id="health-heading" class="flex items-center gap-2 font-semibold text-red-900 dark:text-red-100">
+    <section v-if="checks.length" aria-labelledby="health-heading" class="mb-6 rounded-lg border border-danger-border bg-danger-surface p-4">
+        <h2 id="health-heading" class="flex items-center gap-2 font-semibold text-danger-strong">
             <OctagonAlert class="size-5 shrink-0" aria-hidden="true" />
             Something in the background needs attention
         </h2>
         <ul class="mt-3 space-y-3 text-sm">
             <li v-for="check in checks" :key="check.key" class="flex gap-2">
-                <AlertTriangle
-                    :class="[
-                        'mt-0.5 size-4 shrink-0',
-                        check.status === 'fail' ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300',
-                    ]"
-                    aria-hidden="true"
-                />
+                <AlertTriangle :class="['mt-0.5 size-4 shrink-0', check.status === 'fail' ? 'text-danger' : 'text-warning']" aria-hidden="true" />
                 <div class="min-w-0">
                     <p class="font-medium text-foreground">
                         {{ check.label }}

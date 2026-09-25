@@ -62,7 +62,7 @@ const empty: Record<Tab, { title: string; description: string }> = {
                                 :class="[
                                     'rounded-full px-1.5 text-xs tabular-nums',
                                     t.value === 'overdue' && t.count > 0
-                                        ? 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100'
+                                        ? 'bg-danger-chip text-danger-strong'
                                         : 'bg-background/70 text-muted-foreground',
                                 ]"
                                 >{{ t.count }}</span

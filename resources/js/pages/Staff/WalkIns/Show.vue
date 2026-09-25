@@ -58,11 +58,7 @@ function print() {
                 </div>
             </div>
 
-            <div
-                v-if="voided"
-                role="status"
-                class="rounded-md border border-red-400 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
-            >
+            <div v-if="voided" role="status" class="rounded-md border border-danger-border bg-danger-surface px-4 py-3 text-sm text-danger-strong">
                 <p class="font-semibold">
                     This sale was voided<template v-if="sale.cancelled_at"> on {{ formatDateTime(sale.cancelled_at) }}</template
                     >.

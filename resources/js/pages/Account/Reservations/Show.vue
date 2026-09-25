@@ -64,8 +64,8 @@ const paymentStatus: Record<PaymentRow['status'], string> = {
 };
 
 function statusTone(s: PaymentRow['status']): string {
-    if (s === 'refund_failed') return 'text-red-700 dark:text-red-400';
-    if (s === 'refund_pending' || s === 'needs_review') return 'text-amber-800 dark:text-amber-300';
+    if (s === 'refund_failed') return 'text-danger';
+    if (s === 'refund_pending' || s === 'needs_review') return 'text-warning-strong';
 
     return 'text-muted-foreground';
 }
@@ -107,10 +107,7 @@ function pay() {
                     We are preparing your order. It can no longer be cancelled.
                 </p>
 
-                <div
-                    v-if="isPending"
-                    class="mt-4 space-y-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"
-                >
+                <div v-if="isPending" class="mt-4 space-y-3 rounded-md border border-warning-border bg-warning-surface p-3 text-warning-strong">
                     <p class="flex items-center gap-2 font-medium">
                         <Clock class="size-4 shrink-0" aria-hidden="true" />
                         Pay by {{ formatDateTime(reservation.expires_at) }}
@@ -148,7 +145,7 @@ function pay() {
 
                 <div
                     v-else-if="status === 'forfeited'"
-                    class="mt-4 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-950 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
+                    class="mt-4 rounded-md border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-strong"
                 >
                     <p class="font-medium">
                         Not picked up in time<template v-if="reservation.forfeited_at"

@@ -28,12 +28,12 @@ function statusTone(status: PaymentRow['status']): string {
     switch (status) {
         case 'paid':
         case 'refunded':
-            return 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-100';
+            return 'bg-success-chip text-success-strong';
         case 'needs_review':
         case 'refund_failed':
-            return 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100';
+            return 'bg-danger-chip text-danger-strong';
         default:
-            return 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100';
+            return 'bg-warning-chip text-warning-strong';
     }
 }
 
@@ -67,9 +67,7 @@ const rows = computed(() => {
             :class="[
                 'rounded-md border p-3 text-sm',
                 nested ? 'ml-6' : '',
-                p.status === 'needs_review' || p.status === 'refund_failed'
-                    ? 'border-red-400 bg-red-50 dark:border-red-800 dark:bg-red-950/40'
-                    : 'border-border',
+                p.status === 'needs_review' || p.status === 'refund_failed' ? 'border-danger-border bg-danger-surface' : 'border-border',
             ]"
         >
             <div class="flex flex-wrap items-center justify-between gap-2">

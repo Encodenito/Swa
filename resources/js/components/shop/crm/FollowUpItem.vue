@@ -28,20 +28,10 @@ function markDone() {
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
         <div class="min-w-0 space-y-1">
             <p class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <span
-                    :class="[
-                        'font-semibold',
-                        followUp.overdue ? 'text-red-700 dark:text-red-400' : '',
-                        followUp.done ? 'text-muted-foreground line-through' : '',
-                    ]"
-                >
+                <span :class="['font-semibold', followUp.overdue ? 'text-danger' : '', followUp.done ? 'text-muted-foreground line-through' : '']">
                     Due {{ formatDate(dateOnlyIso(followUp.due_on)) }}
                 </span>
-                <span
-                    v-if="followUp.overdue"
-                    class="rounded bg-red-100 px-1.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-200"
-                    >Overdue</span
-                >
+                <span v-if="followUp.overdue" class="rounded bg-danger-chip px-1.5 py-0.5 text-xs font-semibold text-danger-strong">Overdue</span>
                 <span v-if="followUp.done" class="text-xs text-muted-foreground">Done {{ formatDateTime(followUp.completed_at) }}</span>
             </p>
             <p v-if="showCustomer && followUp.customer" class="text-sm">

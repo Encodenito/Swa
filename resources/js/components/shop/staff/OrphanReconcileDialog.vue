@@ -56,7 +56,7 @@ const prefix = computed(() => `orphan-reconcile-${props.orphanId}`);
             </DialogHeader>
 
             <form :id="prefix" class="space-y-4" @submit.prevent="submit">
-                <fieldset class="space-y-2" :disabled="form.processing">
+                <fieldset class="space-y-2" :disabled="form.processing" :aria-describedby="`${prefix}-outcome-error`">
                     <legend class="text-sm font-medium">What does PayMongo show?</legend>
                     <label class="flex items-start gap-3 rounded-md border border-border p-3">
                         <input v-model="form.outcome" type="radio" value="found" class="mt-1" />
@@ -66,7 +66,7 @@ const prefix = computed(() => `orphan-reconcile-${props.orphanId}`);
                         <input v-model="form.outcome" type="radio" value="not_found" class="mt-1" />
                         <span>There is no such refund. Mark it failed so it can be retried.</span>
                     </label>
-                    <InputError :message="form.errors.outcome" />
+                    <InputError :id="`${prefix}-outcome-error`" :message="form.errors.outcome" />
                 </fieldset>
 
                 <div v-if="form.outcome === 'found'" class="space-y-1">

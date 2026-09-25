@@ -36,8 +36,8 @@ function search() {
 }
 
 function rowTone(item: StockItem): string {
-    if (item.available <= 0) return 'bg-red-50/60 dark:bg-red-950/20';
-    if (item.low_stock) return 'bg-amber-50/60 dark:bg-amber-950/20';
+    if (item.available <= 0) return 'bg-danger-surface/60';
+    if (item.low_stock) return 'bg-warning-surface/60';
 
     return '';
 }

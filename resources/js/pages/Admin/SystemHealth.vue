@@ -65,17 +65,9 @@ const statusText: Record<HealthCheck['status'], string> = { ok: 'Pass', warn: 'W
                 <h3 :id="`group-${group.name}`" class="mb-2 font-semibold">{{ group.name }}</h3>
                 <ul class="divide-y divide-border rounded-lg border border-border bg-card">
                     <li v-for="check in group.checks" :key="check.key" class="flex gap-3 p-4 text-sm">
-                        <CheckCircle2
-                            v-if="check.status === 'ok'"
-                            class="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400"
-                            aria-hidden="true"
-                        />
-                        <TriangleAlert
-                            v-else-if="check.status === 'warn'"
-                            class="mt-0.5 size-5 shrink-0 text-amber-600 dark:text-amber-400"
-                            aria-hidden="true"
-                        />
-                        <OctagonAlert v-else class="mt-0.5 size-5 shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />
+                        <CheckCircle2 v-if="check.status === 'ok'" class="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
+                        <TriangleAlert v-else-if="check.status === 'warn'" class="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
+                        <OctagonAlert v-else class="mt-0.5 size-5 shrink-0 text-danger" aria-hidden="true" />
                         <div class="min-w-0">
                             <p class="font-medium">
                                 {{ check.label }}

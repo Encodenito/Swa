@@ -5,8 +5,10 @@ defineProps<{
 </script>
 
 <template>
+    <!-- The root keeps any id passed in, so inputs can point aria-describedby at it. -->
     <div v-show="message">
-        <p class="text-sm text-red-600 dark:text-red-500">
+        <!-- Inserted only when there is an error, so screen readers announce it as it appears. -->
+        <p v-if="message" role="alert" class="text-sm text-danger">
             {{ message }}
         </p>
     </div>

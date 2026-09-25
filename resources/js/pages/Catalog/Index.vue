@@ -86,6 +86,7 @@ const chipClass =
                         enterkeyhint="search"
                         class="h-11 min-w-0 flex-1"
                         :aria-invalid="Boolean(errors.q) || undefined"
+                        aria-describedby="catalog-search-error"
                     />
                     <Button type="submit" class="h-11 shrink-0 px-4" :disabled="loading">
                         <LoaderCircle v-if="loading" class="size-4 animate-spin" aria-hidden="true" />
@@ -93,7 +94,7 @@ const chipClass =
                         Search
                     </Button>
                 </div>
-                <InputError :message="errors.q" />
+                <InputError id="catalog-search-error" :message="errors.q" />
             </form>
 
             <div v-if="categories.length > 0">

@@ -33,7 +33,7 @@ async function copy() {
 </script>
 
 <template>
-    <section aria-labelledby="checkout-heading" class="rounded-lg border border-blue-300 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/40">
+    <section aria-labelledby="checkout-heading" class="rounded-lg border border-info-border bg-info-surface p-4">
         <h3 id="checkout-heading" class="font-semibold">Payment link for the customer</h3>
         <p class="mt-1 text-sm text-muted-foreground">
             Send this link so the customer can pay the downpayment with GCash or card. The reservation is confirmed only after PayMongo tells us the
@@ -57,8 +57,8 @@ async function copy() {
                 </Button>
             </div>
             <p id="checkout-copy-status" aria-live="polite" class="text-sm">
-                <span v-if="state === 'copied'" class="text-emerald-700 dark:text-emerald-400">Link copied.</span>
-                <span v-else-if="state === 'failed'" class="text-red-600 dark:text-red-500"
+                <span v-if="state === 'copied'" class="text-success">Link copied.</span>
+                <span v-else-if="state === 'failed'" class="text-danger"
                     >Could not copy automatically. The link is selected; copy it with Ctrl+C or a long press.</span
                 >
             </p>

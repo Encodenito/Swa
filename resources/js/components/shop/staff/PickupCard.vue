@@ -80,7 +80,7 @@ function complete() {
                 <p
                     v-if="needsReview"
                     role="alert"
-                    class="rounded-md border border-red-400 bg-red-50 px-3 py-2 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
+                    class="rounded-md border border-danger-border bg-danger-surface px-3 py-2 text-sm text-danger-strong"
                 >
                     A payment needs review. Check it before handing over.
                 </p>

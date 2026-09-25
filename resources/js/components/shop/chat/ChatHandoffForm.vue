@@ -140,7 +140,7 @@ defineExpose({
                     <InputError id="chat-handoff-message-error" :message="errors.message" />
                 </div>
 
-                <p v-if="generalError" role="alert" class="rounded-md bg-red-50 px-3 py-2 text-sm text-red-900 dark:bg-red-950 dark:text-red-100">
+                <p v-if="generalError" role="alert" class="rounded-md bg-danger-surface px-3 py-2 text-sm text-danger-strong">
                     {{ generalError }}
                 </p>
             </div>

@@ -44,7 +44,7 @@ function onOpenChange(value: boolean) {
             </DialogHeader>
 
             <form :id="`${idp}-form`" class="space-y-4" @submit.prevent="submit">
-                <fieldset class="space-y-2">
+                <fieldset class="space-y-2" :aria-describedby="`${idp}-type-error`">
                     <legend class="mb-1 text-sm font-medium">What happened?</legend>
                     <label class="flex cursor-pointer items-start gap-3 rounded-md border border-border p-3 has-[:checked]:border-primary">
                         <input v-model="form.type" type="radio" :name="`${idp}-type`" value="damaged" class="mt-1" />
@@ -60,7 +60,7 @@ function onOpenChange(value: boolean) {
                             <span class="block text-muted-foreground">The shelf count differs from the system.</span>
                         </span>
                     </label>
-                    <InputError :message="form.errors.type" />
+                    <InputError :id="`${idp}-type-error`" :message="form.errors.type" />
                 </fieldset>
 
                 <div class="grid gap-1.5">

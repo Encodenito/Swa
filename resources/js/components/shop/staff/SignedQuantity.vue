@@ -5,9 +5,8 @@ import { computed } from 'vue';
 const props = defineProps<{ quantity: number }>();
 
 const display = computed(() => {
-    if (props.quantity > 0) return { text: `+${props.quantity}`, sr: `${props.quantity} added`, tone: 'text-emerald-700 dark:text-emerald-400' };
-    if (props.quantity < 0)
-        return { text: `−${Math.abs(props.quantity)}`, sr: `${Math.abs(props.quantity)} removed`, tone: 'text-red-700 dark:text-red-400' };
+    if (props.quantity > 0) return { text: `+${props.quantity}`, sr: `${props.quantity} added`, tone: 'text-success' };
+    if (props.quantity < 0) return { text: `−${Math.abs(props.quantity)}`, sr: `${Math.abs(props.quantity)} removed`, tone: 'text-danger' };
 
     return { text: '0', sr: 'no change', tone: 'text-muted-foreground' };
 });

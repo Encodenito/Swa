@@ -154,7 +154,7 @@ const timeline = computed(() =>
             <p
                 v-if="needsReview"
                 role="alert"
-                class="mb-6 rounded-md border border-red-400 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/40 dark:text-red-100"
+                class="mb-6 rounded-md border border-danger-border bg-danger-surface px-4 py-3 text-sm text-danger-strong"
             >
                 A payment on this reservation needs review. Check the payment note below before handing anything over.
                 <Link :href="route('staff.payments.review')" class="font-medium underline underline-offset-4">Open payments to review</Link>
