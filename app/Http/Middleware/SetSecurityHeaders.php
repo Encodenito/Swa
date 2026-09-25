@@ -20,6 +20,11 @@ class SetSecurityHeaders
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+        // Tell browsers to use https only. Never locally or over http, or the dev site would lock itself out.
+        if ($request->isSecure() && app()->environment('production')) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000');
+        }
+
         return $response;
     }
 }

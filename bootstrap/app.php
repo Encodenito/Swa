@@ -13,6 +13,8 @@ use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -51,5 +53,23 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return back(303)->with('error', $e->getMessage());
+        });
+
+        // Friendly error pages instead of the framework screen (never shows code or settings).
+        // Local debug mode keeps the detailed screen for developers.
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            $status = $response->getStatusCode();
+
+            if (in_array($status, [403, 404, 500, 503], true) && ! config('app.debug') && ! $request->expectsJson()) {
+                return Inertia::render('Error', ['status' => $status])
+                    ->toResponse($request)
+                    ->setStatusCode($status);
+            }
+
+            if ($status === 419 && ! $request->expectsJson()) {
+                return back()->with('error', 'Your session expired. Please try again.');
+            }
+
+            return $response;
         });
     })->create();
