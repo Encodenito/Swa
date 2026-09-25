@@ -55,9 +55,37 @@ A PC that is switched off at night cannot run the shop. Unpaid reservations woul
    php artisan route:cache
    php artisan view:cache
    ```
-7. **Background processes:** see section 3.
-8. **Check:** run `php artisan swa:preflight`. Only warnings you understand may remain.
-9. **Content:** under **Admin → Chatbot FAQ**, replace the "shop hours and address" answer. Under **Admin → Settings**, confirm the downpayment %, pickup days and forfeit %.
+7. **Web server folder:** see "Web server folder" below. This is the most important security step.
+8. **Background processes:** see section 3.
+9. **Check:** run `php artisan swa:preflight`. Only warnings you understand may remain.
+10. **Content:** under **Admin → Chatbot FAQ**, replace the "shop hours and address" answer. Under **Admin → Settings**, confirm the downpayment %, pickup days and forfeit %.
+
+### Web server folder
+
+**Only the `public` folder may be reachable from the web.** The project folder also holds `.env` (all your keys), the logs and the backups (every customer's data).
+
+XAMPP's Apache serves all of `C:\xampp\htdocs` by default. A project in `htdocs\SWA` is then reachable at `http://your-pc/SWA/`. The project ships two protections:
+- a `.htaccess` in the project folder that blocks everything outside `public`
+- one in the backup folder
+
+They only work while Apache reads `.htaccess` files (`AllowOverride All`), so they are a safety net, not the fix.
+
+**The fix on XAMPP:** point Apache at `public`. In `C:\xampp\apache\conf\httpd.conf`, change both lines:
+
+```apache
+DocumentRoot "C:/xampp/htdocs/SWA/public"
+<Directory "C:/xampp/htdocs/SWA/public">
+```
+
+For https, do the same in `C:\xampp\apache\conf\extra\httpd-ssl.conf` (`DocumentRoot` and `<Directory>`), then restart Apache. The site now opens at `https://your-domain/` (no `/SWA/public`), which is what `APP_URL` should be.
+
+Alternatively, move the project outside `htdocs` (e.g. `C:\swa`) and point the same two lines at `C:/swa/public`.
+
+**Check it:** open `https://your-domain/.env` and `https://your-domain/SWA/.env`. Both must show "Not Found" or "Forbidden", never your settings.
+
+On Linux/Nginx, set `root /var/www/swa/public;`.
+
+**Behind a proxy or load balancer** (e.g. Cloudflare in front of the server): Laravel must trust it. Otherwise it thinks requests are plain http, and https cookies and the HSTS header are not applied correctly. In `bootstrap/app.php`, add `$middleware->trustProxies(at: '*');` only when the server is reachable **only** through that proxy.
 
 ## 3. Keeping the background processes running
 
@@ -101,6 +129,12 @@ stdout_logfile=/var/www/swa/storage/logs/worker.log
 - It saves the database and the uploaded item photos to `storage/app/backups`.
 - It keeps 14 days (`BACKUP_KEEP_DAYS`).
 - It never includes `.env`.
+
+- It writes a "deny" `.htaccess` into the folder.
+- File names get a random suffix.
+- It refuses a `BACKUP_PATH` inside `public`.
+
+**Admin → System health** warns when the newest backup is more than 26 hours old.
 
 **Copy that folder somewhere else every week** (external drive or cloud storage). A backup on the same disk does not survive a disk failure.
 
@@ -154,6 +188,7 @@ php artisan swa:preflight
 ## 8. Launch-day checklist
 
 - [ ] `php artisan swa:preflight` shows **0 failed**
+- [ ] The web server serves only `public/`: `https://your-domain/.env` does not show your settings
 - [ ] Development accounts `*@swa.test` do not exist on the live database
 - [ ] Your admin and staff accounts exist, and temporary passwords have been changed
 - [ ] Scheduler and queue worker start automatically after a reboot (reboot once and check the dashboard)

@@ -146,21 +146,36 @@ The API key is secret: keep it only in `.env`, never in git or chat. Walk-in cus
 ## Backups
 
 `php artisan swa:backup` saves the database and the uploaded item photos to `storage/app/backups`:
-- The file names are `swa-db-YYYYMMDD-HHMMSS.sql` and `swa-images-….zip`.
+- The file names are `swa-db-YYYYMMDD-HHMMSS-xxxxxxxx.sql` and `swa-images-….zip`. The suffix is random.
 - It keeps 14 days of backups.
 - It never includes `.env`.
+- It writes a deny `.htaccess` into the folder, and refuses a `BACKUP_PATH` inside `public`.
+
+On XAMPP, Apache must serve only `public/`. See "Web server folder" in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The project-root `.htaccess` is only a safety net.
 
 The scheduler runs it every night at 02:00. No backup package is used; it calls XAMPP's `mysqldump` (the path is set with `BACKUP_MYSQLDUMP`). The database password goes to `mysqldump` through the environment, never on the command line.
 
 **Copy `storage/app/backups` to a second place** (external drive or cloud storage) every week. `.env` holds secrets: keep your own copy of it somewhere safe, separate from the backups.
 
-**Restore.** This overwrites the database, so try it first on a copy, e.g. a database named `swa_restore_test`:
+**Keep `APP_KEY` safe** with your copy of `.env`. It signs sessions, cookies and email links (verification, password reset). A new key logs everyone out and breaks links already sent. The database itself does not depend on it.
+
+**Test a restore on a copy first.** This loads the dump into a separate database and leaves the shop untouched:
 
 ```bash
-/c/xampp/mysql/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS swa_reservations CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-/c/xampp/mysql/bin/mysql -u root swa_reservations < storage/app/backups/swa-db-YYYYMMDD-HHMMSS.sql
-# Photos: unzip swa-images-YYYYMMDD-HHMMSS.zip so its "public" folder replaces storage/app/public
+/c/xampp/mysql/bin/mysql -u root -e "CREATE DATABASE swa_restore_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+/c/xampp/mysql/bin/mysql -u root swa_restore_test < storage/app/backups/swa-db-YYYYMMDD-HHMMSS-xxxxxxxx.sql
+/c/xampp/mysql/bin/mysql -u root swa_restore_test -e "SELECT COUNT(*) FROM reservations"
+/c/xampp/mysql/bin/mysql -u root -e "DROP DATABASE swa_restore_test"
+```
+
+**Real restore** (after a disaster). It **overwrites** the shop database, so take a fresh `swa:backup` first if the database still works:
+
+```bash
+php artisan down
+/c/xampp/mysql/bin/mysql -u root swa_reservations < storage/app/backups/swa-db-YYYYMMDD-HHMMSS-xxxxxxxx.sql
+# Photos: unzip swa-images-….zip so its "public" folder replaces storage/app/public
 php artisan storage:link
+php artisan up
 ```
 
 Test a restore at least once before relying on the backups.
