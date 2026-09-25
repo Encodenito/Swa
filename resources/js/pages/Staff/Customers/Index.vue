@@ -4,6 +4,7 @@ import Pagination from '@/components/shop/Pagination.vue';
 import Chip from '@/components/shop/admin/Chip.vue';
 import TagChip from '@/components/shop/crm/TagChip.vue';
 import { manilaIso, type TagRef } from '@/components/shop/crm/crm';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import NativeSelect from '@/components/shop/staff/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
@@ -121,7 +122,7 @@ const followUpLabel = (n: number) => (n === 1 ? '1 open follow-up' : `${n} open 
                 </button>
             </div>
 
-            <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
+            <LoadingRegion :loading="searching">
                 <EmptyState
                     v-if="customers.data.length === 0"
                     :title="filtered ? 'No customers match' : 'No customers yet'"
@@ -199,7 +200,7 @@ const followUpLabel = (n: number) => (n === 1 ? '1 open follow-up' : `${n} open 
 
                     <Pagination :links="customers.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
     </StaffLayout>
 </template>

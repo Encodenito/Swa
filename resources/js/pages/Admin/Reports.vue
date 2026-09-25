@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -145,7 +146,7 @@ const periodLabel = computed(() => `${formatDate(props.filters.from)} to ${forma
                 <Button type="submit" class="h-10" :disabled="loading">{{ loading ? 'Loading…' : 'Show report' }}</Button>
             </form>
 
-            <div :class="['space-y-10 transition-opacity', loading ? 'opacity-60' : '']" :aria-busy="loading">
+            <LoadingRegion :loading="loading" class="space-y-10">
                 <!-- Sales per day -->
                 <section aria-labelledby="sales-heading" class="space-y-3">
                     <div class="flex flex-wrap items-end justify-between gap-2">
@@ -379,7 +380,7 @@ const periodLabel = computed(() => `${formatDate(props.filters.from)} to ${forma
                         </ul>
                     </template>
                 </section>
-            </div>
+            </LoadingRegion>
         </div>
     </AdminLayout>
 </template>

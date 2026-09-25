@@ -4,6 +4,7 @@ import InputError from '@/components/InputError.vue';
 import Pagination from '@/components/shop/Pagination.vue';
 import AddStaffDialog from '@/components/shop/admin/AddStaffDialog.vue';
 import Chip from '@/components/shop/admin/Chip.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import NativeSelect from '@/components/shop/staff/NativeSelect.vue';
 import TextArea from '@/components/shop/staff/TextArea.vue';
@@ -153,7 +154,7 @@ function submitActive() {
                 Deactivated accounts are signed out and cannot log in. Their reservations, payments and history are kept.
             </p>
 
-            <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
+            <LoadingRegion :loading="searching">
                 <EmptyState
                     v-if="users.data.length === 0"
                     :title="hasFilters ? 'No accounts match your search' : 'No accounts yet'"
@@ -259,7 +260,7 @@ function submitActive() {
 
                     <Pagination :links="users.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
 
         <AddStaffDialog v-model:open="addOpen" :roles="roles" />

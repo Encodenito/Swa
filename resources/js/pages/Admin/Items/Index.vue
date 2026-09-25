@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Pagination from '@/components/shop/Pagination.vue';
 import PriceTag from '@/components/shop/PriceTag.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import ConfirmDialog from '@/components/shop/staff/ConfirmDialog.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import StockLevel from '@/components/shop/staff/StockLevel.vue';
@@ -96,7 +97,7 @@ function remove() {
                 <Button type="submit" class="h-10" :disabled="searching">{{ searching ? 'Searching…' : 'Search' }}</Button>
             </form>
 
-            <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
+            <LoadingRegion :loading="searching">
                 <EmptyState
                     v-if="items.data.length === 0"
                     :title="q ? `No items match “${q}”` : 'No items yet'"
@@ -155,7 +156,7 @@ function remove() {
 
                     <Pagination :links="items.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
 
         <ConfirmDialog

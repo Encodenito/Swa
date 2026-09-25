@@ -2,6 +2,7 @@
 import Heading from '@/components/Heading.vue';
 import ClearanceBadge from '@/components/shop/ClearanceBadge.vue';
 import Pagination from '@/components/shop/Pagination.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import StockLevel from '@/components/shop/staff/StockLevel.vue';
 import { Button } from '@/components/ui/button';
@@ -58,7 +59,7 @@ function rowTone(item: StockItem): string {
                 <Button type="submit" class="h-10" :disabled="searching">{{ searching ? 'Searching…' : 'Search' }}</Button>
             </form>
 
-            <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
+            <LoadingRegion :loading="searching">
                 <EmptyState
                     v-if="items.data.length === 0"
                     :title="q ? `No items match “${q}”` : 'No items yet'"
@@ -120,7 +121,7 @@ function rowTone(item: StockItem): string {
 
                     <Pagination :links="items.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
     </StaffLayout>
 </template>

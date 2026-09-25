@@ -2,6 +2,7 @@
 import Heading from '@/components/Heading.vue';
 import Pagination from '@/components/shop/Pagination.vue';
 import StatusBadge from '@/components/shop/StatusBadge.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import NativeSelect from '@/components/shop/staff/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
@@ -128,7 +129,7 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
                 </div>
             </form>
 
-            <div :class="['transition-opacity', searching ? 'opacity-60' : '']" :aria-busy="searching">
+            <LoadingRegion :loading="searching">
                 <EmptyState
                     v-if="reservations.data.length === 0"
                     :title="filtered ? 'Nothing matches your search' : 'No reservations yet'"
@@ -209,7 +210,7 @@ function deadline(r: ReservationSummary): { label: string; value: string } | nul
 
                     <Pagination :links="reservations.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
     </StaffLayout>
 </template>

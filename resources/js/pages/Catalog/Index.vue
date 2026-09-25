@@ -3,6 +3,7 @@ import InputError from '@/components/InputError.vue';
 import Pagination from '@/components/shop/Pagination.vue';
 import EmptyState from '@/components/shop/customer/EmptyState.vue';
 import ItemCardView from '@/components/shop/customer/ItemCard.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,8 @@ const errors = computed(() => (page.props.errors ?? {}) as Record<string, string
 
 const q = ref(props.filters.q ?? '');
 const loading = ref(false);
+// As many placeholder cards as there are items now (4–8), so the page height barely moves.
+const skeletonCount = computed(() => Math.min(8, Math.max(4, props.items.data.length)));
 
 const activeCategory = computed(() => props.categories.find((c) => c.slug === props.filters.category) ?? null);
 const hasFilters = computed(() => Boolean(props.filters.q) || Boolean(props.filters.category));
@@ -137,7 +140,7 @@ const chipClass =
                 <InputError class="mt-2" :message="errors.category" />
             </div>
 
-            <section :aria-busy="loading" aria-labelledby="results-heading">
+            <section aria-labelledby="results-heading">
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
                     <h2 id="results-heading" class="text-sm text-muted-foreground" aria-live="polite">
                         {{ loading ? 'Loading items…' : resultLine }}
@@ -153,36 +156,34 @@ const chipClass =
                     </button>
                 </div>
 
-                <EmptyState
-                    v-if="items.data.length === 0"
-                    :title="hasFilters ? 'No items match your search' : 'No items listed yet'"
-                    :description="
-                        hasFilters ? 'Try a shorter search, check the spelling, or pick another category.' : 'Check back soon, or visit the shop.'
-                    "
-                >
-                    <Button v-if="hasFilters" type="button" variant="outline" class="h-11" :disabled="loading" @click="clearFilters"
-                        >Show all items</Button
+                <LoadingRegion :loading="loading" variant="cards" :count="skeletonCount">
+                    <EmptyState
+                        v-if="items.data.length === 0"
+                        :title="hasFilters ? 'No items match your search' : 'No items listed yet'"
+                        :description="
+                            hasFilters ? 'Try a shorter search, check the spelling, or pick another category.' : 'Check back soon, or visit the shop.'
+                        "
                     >
-                    <Link
-                        v-else
-                        :href="route('home')"
-                        class="inline-flex h-11 items-center rounded-md border border-border bg-card px-5 font-semibold hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    >
-                        Back to home
-                    </Link>
-                </EmptyState>
+                        <Button v-if="hasFilters" type="button" variant="outline" class="h-11" :disabled="loading" @click="clearFilters"
+                            >Show all items</Button
+                        >
+                        <Link
+                            v-else
+                            :href="route('home')"
+                            class="inline-flex h-11 items-center rounded-md border border-border bg-card px-5 font-semibold hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                            Back to home
+                        </Link>
+                    </EmptyState>
 
-                <ul
-                    v-else
-                    class="grid grid-cols-1 gap-4 transition-opacity sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                    :class="{ 'pointer-events-none opacity-60': loading }"
-                >
-                    <li v-for="item in items.data" :key="item.id">
-                        <ItemCardView :item="item" />
-                    </li>
-                </ul>
+                    <ul v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                        <li v-for="item in items.data" :key="item.id">
+                            <ItemCardView :item="item" />
+                        </li>
+                    </ul>
 
-                <Pagination :links="items.links" />
+                    <Pagination :links="items.links" />
+                </LoadingRegion>
             </section>
         </div>
     </PublicLayout>

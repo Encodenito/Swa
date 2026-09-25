@@ -3,6 +3,7 @@ import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
 import Pagination from '@/components/shop/Pagination.vue';
 import AuditChanges from '@/components/shop/admin/AuditChanges.vue';
+import LoadingRegion from '@/components/shop/skeleton/LoadingRegion.vue';
 import EmptyState from '@/components/shop/staff/EmptyState.vue';
 import NativeSelect from '@/components/shop/staff/NativeSelect.vue';
 import { Button } from '@/components/ui/button';
@@ -196,7 +197,7 @@ function clear() {
                 </Button>
             </p>
 
-            <div :class="['transition-opacity', loading ? 'opacity-60' : '']" :aria-busy="loading">
+            <LoadingRegion :loading="loading">
                 <EmptyState
                     v-if="logs.data.length === 0"
                     :title="hasFilters ? 'No entries match these filters' : 'Nothing recorded yet'"
@@ -250,7 +251,7 @@ function clear() {
 
                     <Pagination :links="logs.links" />
                 </template>
-            </div>
+            </LoadingRegion>
         </div>
     </AdminLayout>
 </template>
