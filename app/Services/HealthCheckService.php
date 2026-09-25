@@ -12,6 +12,7 @@ use App\Services\PayMongo\WebhookSignature;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Throwable;
 
 /**
@@ -175,6 +176,9 @@ class HealthCheckService
         $writable = is_writable(storage_path()) && is_writable(base_path('bootstrap/cache'));
         $checks[] = $this->status($writable, 'writable', 'Server', 'Writable folders', $writable ? 'storage and bootstrap/cache are writable.' : 'storage or bootstrap/cache is not writable.', 'Give the web server write access to storage/ and bootstrap/cache/.', fail: true);
 
+        $checks[] = $this->webRoot($production);
+        $checks[] = $this->lastBackup();
+
         // Database
         try {
             $pending = $this->pendingMigrations();
@@ -199,13 +203,50 @@ class HealthCheckService
         return collect($checks)->contains('status', self::FAIL);
     }
 
+    /**
+     * XAMPP serves all of htdocs by default, so a project inside it exposes .env and backups unless
+     * the web server points at public/ (or the project-root .htaccess denies the rest).
+     */
+    private function webRoot(bool $production): array
+    {
+        $insideHtdocs = str_contains(strtolower(str_replace('\\', '/', base_path())), '/htdocs/');
+        $denied = is_file(base_path('.htaccess')) && str_contains((string) file_get_contents(base_path('.htaccess')), 'Require all denied');
+        $fix = 'Point Apache at the public folder, or move the project out of htdocs (docs/DEPLOYMENT.md, "Web server folder").';
+
+        return match (true) {
+            ! $insideHtdocs => $this->ok('web_root', 'Server', 'Web server folder', 'Project is outside htdocs. Make sure the web server serves only public/.'),
+            ! $denied => $production
+                ? $this->fail('web_root', 'Server', 'Web server folder', 'Project is inside htdocs without the deny .htaccess: .env and backups can be downloaded.', $fix)
+                : $this->warn('web_root', 'Server', 'Web server folder', 'Project is inside htdocs without the deny .htaccess: .env and backups can be downloaded.', $fix),
+            default => $this->warn('web_root', 'Server', 'Web server folder', 'Project is inside htdocs. The .htaccess blocks .env and backups, but only on Apache with .htaccess enabled.', $fix),
+        };
+    }
+
+    private function lastBackup(): array
+    {
+        $dir = (string) config('backup.path');
+        $newest = collect(is_dir($dir) ? File::files($dir) : [])
+            ->filter(fn ($file) => preg_match('/^swa-db-\d{8}-\d{6}(-[a-z0-9]+)?\.sql$/', $file->getFilename()))
+            ->max(fn ($file) => $file->getMTime());
+
+        if ($newest === null) {
+            return $this->warn('backup', 'Server', 'Last backup', 'No database backup found.', 'Run `php artisan swa:backup`, and keep the scheduler running (nightly at 02:00).');
+        }
+
+        $hours = (int) floor((time() - $newest) / 3600);
+
+        return $hours > 26
+            ? $this->warn('backup', 'Server', 'Last backup', "Newest database backup is {$hours} hours old.", 'Check the scheduler is running, then run `php artisan swa:backup`.')
+            : $this->ok('backup', 'Server', 'Last backup', $hours === 0 ? 'Less than an hour ago.' : "{$hours} hour(s) ago.");
+    }
+
     private function pendingMigrations(): int
     {
         /** @var Migrator $migrator */
         $migrator = app('migrator');
 
         if (! $migrator->repositoryExists()) {
-            return count($migrator->getMigrationFiles($migrator->paths() + [database_path('migrations')]));
+            return count($migrator->getMigrationFiles(array_merge($migrator->paths(), [database_path('migrations')])));
         }
 
         $ran = $migrator->getRepository()->getRan();

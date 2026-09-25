@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Tests\TestCase;
 
 class HealthAndPreflightTest extends TestCase
@@ -100,6 +101,35 @@ class HealthAndPreflightTest extends TestCase
 
         DB::table('jobs')->insert(['queue' => 'default', 'payload' => '{}', 'attempts' => 0, 'available_at' => now()->timestamp, 'created_at' => now()->subMinutes(20)->timestamp]);
         $this->assertSame('fail', $this->checkStatus('queue'));
+    }
+
+    public function test_missing_or_old_backups_are_reported(): void
+    {
+        $dir = storage_path('framework/testing/health-backups');
+        File::deleteDirectory($dir);
+        File::ensureDirectoryExists($dir);
+        config(['backup.path' => $dir]);
+
+        $this->assertSame('warn', $this->checkStatus('backup'));
+
+        $file = "{$dir}/swa-db-20260101-020000-abcd1234.sql";
+        file_put_contents($file, 'dump');
+        $this->assertSame('ok', $this->checkStatus('backup'));
+
+        touch($file, now()->subHours(30)->getTimestamp());
+        clearstatcache();
+        $this->assertSame('warn', $this->checkStatus('backup'));
+
+        File::deleteDirectory($dir);
+    }
+
+    public function test_a_project_inside_htdocs_is_flagged(): void
+    {
+        $status = $this->checkStatus('web_root');
+        $insideHtdocs = str_contains(strtolower(str_replace('\\', '/', base_path())), '/htdocs/');
+
+        // This repo ships the deny .htaccess, so inside htdocs it is a warning, never a pass.
+        $this->assertSame($insideHtdocs ? 'warn' : 'ok', $status);
     }
 
     public function test_the_scheduler_writes_a_heartbeat(): void

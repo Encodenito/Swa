@@ -16,9 +16,10 @@ return [
         ? 'C:/xampp/mysql/bin/mysqldump.exe'
         : 'mysqldump'),
 
-    'path' => env('BACKUP_PATH', storage_path('app/backups')),
+    // An empty BACKUP_PATH falls back to the default. Must be absolute and outside public/.
+    'path' => env('BACKUP_PATH') ?: storage_path('app/backups'),
 
     // Backups older than this many days are deleted after a successful run.
-    'keep_days' => (int) env('BACKUP_KEEP_DAYS', 14),
+    'keep_days' => max(1, (int) env('BACKUP_KEEP_DAYS', 14)),
 
 ];

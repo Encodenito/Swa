@@ -5,6 +5,7 @@ namespace Tests\Feature\Hardening;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 use Tests\TestCase;
 
 class BackupAndErrorsTest extends TestCase
@@ -80,6 +81,68 @@ class BackupAndErrorsTest extends TestCase
         foreach (File::files($this->dir) as $file) {
             $this->assertStringNotContainsString('APP_KEY=', File::get($file->getPathname()));
         }
+    }
+
+    public function test_backup_folder_gets_a_deny_htaccess_and_unguessable_names(): void
+    {
+        $this->artisan('swa:backup')->assertSuccessful();
+
+        $this->assertStringContainsString('Require all denied', File::get("{$this->dir}/.htaccess"));
+        $dump = collect(File::files($this->dir))->first(fn ($f) => str_ends_with($f->getFilename(), '.sql'));
+        $this->assertMatchesRegularExpression('/^swa-db-\d{8}-\d{6}-[a-z0-9]{8}\.sql$/', $dump->getFilename());
+    }
+
+    public function test_backup_refuses_a_folder_inside_public(): void
+    {
+        config(['backup.path' => public_path('backups')]);
+
+        $this->artisan('swa:backup')->expectsOutputToContain('inside the public folder')->assertFailed();
+
+        $this->assertDirectoryDoesNotExist(public_path('backups'));
+    }
+
+    public function test_backup_refuses_a_relative_folder(): void
+    {
+        config(['backup.path' => 'backups']);
+
+        $this->artisan('swa:backup')->expectsOutputToContain('absolute path')->assertFailed();
+    }
+
+    public function test_backup_refuses_an_odd_database_name(): void
+    {
+        config(['database.connections.'.config('database.default').'.database' => '--all-databases']);
+
+        $this->artisan('swa:backup')->expectsOutputToContain('database name')->assertFailed();
+    }
+
+    public function test_a_zero_keep_days_never_deletes_the_backup_just_made(): void
+    {
+        config(['backup.keep_days' => 0]);
+
+        $this->artisan('swa:backup')->assertSuccessful();
+
+        $this->assertTrue(collect(File::files($this->dir))->contains(fn ($f) => str_ends_with($f->getFilename(), '.sql')));
+    }
+
+    public function test_an_expired_session_redirects_back_with_a_message(): void
+    {
+        Route::post('/_expired', fn () => abort(419))->middleware('web');
+
+        $this->from('/items')->post('/_expired')
+            ->assertStatus(303)
+            ->assertRedirect('/items')
+            ->assertSessionHas('error');
+    }
+
+    public function test_maintenance_page_keeps_retry_after(): void
+    {
+        config(['app.debug' => false]);
+        Route::get('/_down', fn () => throw new ServiceUnavailableHttpException(60))->middleware('web');
+
+        $this->get('/_down')
+            ->assertStatus(503)
+            ->assertHeader('Retry-After', '60')
+            ->assertInertia(fn ($page) => $page->component('Error')->where('status', 503));
     }
 
     public function test_friendly_error_pages_replace_the_debug_screen_in_production(): void

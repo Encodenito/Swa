@@ -1,3 +1,8 @@
+# The project root .htaccess denies everything; this folder is the only one the web may reach.
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
