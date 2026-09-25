@@ -15,6 +15,7 @@ Business rules: skill `swa-business-rules`. PayMongo details: skill `paymongo-in
 - Queue worker: `php artisan queue:work` · Scheduler: `php artisan schedule:work`
 - Dev server: `php artisan serve` + `npm run dev`
 - Simulated payment (local only): `php artisan paymongo:simulate-webhook SWA-XXXXXXXX`
+- Launch checks: `php artisan swa:preflight` (also Admin → System health) · Backup: `php artisan swa:backup` · Deploy guide: `docs/DEPLOYMENT.md`
 
 ## Conventions
 - Business logic in `app/Services`; thin controllers; Form Requests; Policies on every model access; enums in `app/Enums`.

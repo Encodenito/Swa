@@ -145,33 +145,29 @@ The API key is secret: keep it only in `.env`, never in git or chat. Walk-in cus
 
 ## Backups
 
-No backup package is installed; these are manual steps (ask before adding a package).
+`php artisan swa:backup` saves the database and the uploaded item photos to `storage/app/backups`:
+- The file names are `swa-db-YYYYMMDD-HHMMSS.sql` and `swa-images-….zip`.
+- It keeps 14 days of backups.
+- It never includes `.env`.
 
-**What to back up:** the database `swa_reservations` and the uploaded images in `storage/app/public`. `.env` holds secrets; keep a copy somewhere safe, but separately from the other backups.
+The scheduler runs it every night at 02:00. No backup package is used; it calls XAMPP's `mysqldump` (the path is set with `BACKUP_MYSQLDUMP`). The database password goes to `mysqldump` through the environment, never on the command line.
 
-**Back up** (run from the project folder in Git Bash):
+**Copy `storage/app/backups` to a second place** (external drive or cloud storage) every week. `.env` holds secrets: keep your own copy of it somewhere safe, separate from the backups.
 
-```bash
-mkdir -p ~/swa-backups
-STAMP=$(date +%Y%m%d-%H%M)
-/c/xampp/mysql/bin/mysqldump -u root --single-transaction --routines swa_reservations > ~/swa-backups/swa-$STAMP.sql
-tar -czf ~/swa-backups/swa-images-$STAMP.tar.gz storage/app/public
-```
-
-**Schedule it daily** with Windows Task Scheduler: create a basic task that runs `"C:\Program Files\Git\bin\bash.exe" -c "cd /c/xampp/htdocs/SWA && ./backup.sh"` after saving the commands above as `backup.sh`. Copy the backup folder to a second place (external drive or cloud storage) regularly, and delete backups older than 30 days.
-
-**Restore** (this overwrites the database, so try it on a copy first):
+**Restore.** This overwrites the database, so try it first on a copy, e.g. a database named `swa_restore_test`:
 
 ```bash
 /c/xampp/mysql/bin/mysql -u root -e "CREATE DATABASE IF NOT EXISTS swa_reservations CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-/c/xampp/mysql/bin/mysql -u root swa_reservations < ~/swa-backups/swa-YYYYMMDD-HHMM.sql
-tar -xzf ~/swa-backups/swa-images-YYYYMMDD-HHMM.tar.gz
+/c/xampp/mysql/bin/mysql -u root swa_reservations < storage/app/backups/swa-db-YYYYMMDD-HHMMSS.sql
+# Photos: unzip swa-images-YYYYMMDD-HHMMSS.zip so its "public" folder replaces storage/app/public
 php artisan storage:link
 ```
 
 Test a restore at least once before relying on the backups.
 
 ## Before going to production
+
+The full step-by-step guide is [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Run `php artisan swa:preflight` (or open **Admin → System health**) before launch and after every update, and fix everything marked FAIL.
 
 - Never copy `.env.example` as-is: set `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_SECURE_COOKIE=true` and a real `APP_URL`.
 - Seed with `php artisan db:seed --class=SettingsSeeder`, not `migrate --seed`. The dev accounts are refused outside `local`/`testing`, but only if `APP_ENV` is set correctly.
