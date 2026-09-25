@@ -29,7 +29,10 @@ class ConfirmPaymentService
 
     public const UNKNOWN_RESERVATION = 'unknown_reservation';
 
-    public function __construct(private readonly SettingsService $settings) {}
+    public function __construct(
+        private readonly SettingsService $settings,
+        private readonly OrphanPaymentService $orphans,
+    ) {}
 
     public function handlePaid(PaidCheckoutEvent $event): string
     {
@@ -57,7 +60,8 @@ class ConfirmPaymentService
             ->first();
 
         if (! $reservation) {
-            // Money was captured but matches no reservation: needs a person.
+            // Money was captured but matches no reservation: store it for a person to refund.
+            $this->orphans->record($event);
             Log::error('PayMongo payment for an unknown reservation.', ['reference' => $event->referenceNumber, 'payment' => $event->paymentId]);
 
             return self::UNKNOWN_RESERVATION;

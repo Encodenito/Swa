@@ -48,7 +48,7 @@ class SendRefund implements ShouldQueue
         $notes = "Refund for reservation {$refund->reservation->reference_code}. {$refund->note}";
 
         try {
-            $refundRef = $payMongo->createRefund((string) $refund->parent->provider_ref, Money::toCentavos($refund->amount), $notes, $refund->id);
+            $refundRef = $payMongo->createRefund((string) $refund->parent->provider_ref, Money::toCentavos($refund->amount), $notes, (string) $refund->id);
         } catch (PayMongoException $e) {
             $e->definite ? $this->markFailed($refund, $e->errorCode, $audit) : $this->markUnknown($refund, $e->errorCode, $audit);
 

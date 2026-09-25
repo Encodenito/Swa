@@ -10,3 +10,5 @@ Schedule::command('reservations:expire')->everyMinute()->withoutOverlapping(5);
 Schedule::command('reservations:forfeit')->hourly()->withoutOverlapping(10);
 
 Schedule::command('reservations:remind')->dailyAt('08:00')->withoutOverlapping(30);
+
+Schedule::command('stock:low-alert')->dailyAt('08:00')->withoutOverlapping(30);

@@ -69,7 +69,7 @@ class PayMongoService
      *
      * @throws PayMongoException with the PayMongo error code (e.g. available_balance_insufficient)
      */
-    public function createRefund(string $paymentId, int $amountCentavos, string $notes, int $localRefundId): string
+    public function createRefund(string $paymentId, int $amountCentavos, string $notes, string $localRefundId): string
     {
         $response = $this->send(fn () => $this->client()->post(config('paymongo.refunds_path'), [
             'data' => [
@@ -79,7 +79,7 @@ class PayMongoService
                     'reason' => 'others',
                     'notes' => mb_substr($notes, 0, 255),
                     // Lets a person match this refund in the PayMongo dashboard when reconciling.
-                    'metadata' => ['refund_id' => (string) $localRefundId],
+                    'metadata' => ['refund_id' => $localRefundId],
                 ],
             ],
         ]));

@@ -2,11 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\ChatbotFaq;
+use App\Models\ChatHandoff;
+use App\Models\CustomerNote;
+use App\Models\FollowUp;
 use App\Models\Item;
+use App\Models\OrphanPayment;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\Setting;
 use App\Models\StockBatch;
+use App\Models\Tag;
 use App\Models\User;
 use App\Services\Sms\LogSmsSender;
 use App\Services\Sms\SmsSender;
@@ -46,6 +52,12 @@ class AppServiceProvider extends ServiceProvider
             'reservation' => Reservation::class,
             'payment' => Payment::class,
             'setting' => Setting::class,
+            'tag' => Tag::class,
+            'customer_note' => CustomerNote::class,
+            'follow_up' => FollowUp::class,
+            'chat_handoff' => ChatHandoff::class,
+            'chatbot_faq' => ChatbotFaq::class,
+            'orphan_payment' => OrphanPayment::class,
         ]);
     }
 
