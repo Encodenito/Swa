@@ -34,7 +34,8 @@ trait MakesReservations
     protected function confirmedReservation(?User $customer = null): Reservation
     {
         $reservation = $this->pendingReservation($customer);
-        $this->postPaidWebhook($reservation)->assertOk();
+        // A unique PayMongo id per call: the same id twice is (correctly) treated as a duplicate.
+        $this->postPaidWebhook($reservation, 'pay_test'.$reservation->id)->assertOk();
 
         $reservation->refresh();
         $this->assertSame(ReservationStatus::Confirmed, $reservation->status);

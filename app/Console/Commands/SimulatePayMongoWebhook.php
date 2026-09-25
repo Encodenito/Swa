@@ -19,7 +19,8 @@ class SimulatePayMongoWebhook extends Command
     protected $signature = 'paymongo:simulate-webhook
         {reference : Reservation reference code, e.g. SWA-ABCD2345}
         {--amount= : Amount paid in pesos (defaults to the downpayment)}
-        {--payment-id= : Reuse a PayMongo payment id, to test duplicate delivery}';
+        {--payment-id= : Reuse a PayMongo payment id, to test duplicate delivery}
+        {--reference-override= : Send a reference_number that matches no reservation, to test orphan payments}';
 
     protected $description = 'Send a signed test "payment paid" webhook for a reservation (local only)';
 
@@ -42,7 +43,13 @@ class SimulatePayMongoWebhook extends Command
         $amount = $this->option('amount') !== null ? Money::of($this->option('amount')) : $reservation->downpayment_amount;
         $paymentId = $this->option('payment-id') ?: 'pay_sim'.Str::lower(Str::random(20));
 
-        $raw = json_encode(self::payload($reservation, $paymentId, Money::toCentavos($amount)), JSON_THROW_ON_ERROR);
+        $payload = self::payload($reservation, $paymentId, Money::toCentavos($amount));
+
+        if ($override = $this->option('reference-override')) {
+            $payload['data']['attributes']['data']['attributes']['reference_number'] = (string) $override;
+        }
+
+        $raw = json_encode($payload, JSON_THROW_ON_ERROR);
         $url = route('webhooks.paymongo');
 
         $response = Http::withHeaders([

@@ -33,7 +33,7 @@ class RefundTest extends TestCase
 
     private function downpayment(): Payment
     {
-        $reservation = $this->confirmedReservation(); // downpayment 300.00, provider_ref pay_test123
+        $reservation = $this->confirmedReservation(); // downpayment 300.00, provider_ref pay_test{id}
 
         return $reservation->payments()->where('type', PaymentType::Downpayment)->sole();
     }
@@ -48,7 +48,7 @@ class RefundTest extends TestCase
         Http::assertSentCount(1);
         Http::assertSent(fn (Request $r) => $r->url() === 'https://api.paymongo.com/v1/refunds'
             && $r['data']['attributes']['amount'] === 15000
-            && $r['data']['attributes']['payment_id'] === 'pay_test123'
+            && $r['data']['attributes']['payment_id'] === $downpayment->provider_ref
             && $r['data']['attributes']['reason'] === 'others'
             && mb_strlen($r['data']['attributes']['notes']) <= 255);
 
