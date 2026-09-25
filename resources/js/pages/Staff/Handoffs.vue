@@ -119,17 +119,18 @@ function askClose(h: Handoff) {
 
             <template v-else>
                 <ul class="space-y-3">
-                    <li
-                        v-for="h in handoffs.data"
-                        :key="h.id"
-                        :class="[
-                            'rounded-lg border border-l-4 bg-card p-4 text-sm',
-                            h.status === 'open' ? 'border-l-amber-400 dark:border-l-amber-700' : h.mine ? 'border-l-primary' : 'border-l-border',
-                        ]"
-                    >
+                    <li v-for="h in handoffs.data" :key="h.id" class="rounded-lg border border-border bg-card p-4 text-sm">
                         <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                             <div class="min-w-0">
-                                <p class="font-semibold">{{ h.name }}</p>
+                                <p class="flex flex-wrap items-center gap-2 font-semibold">
+                                    {{ h.name }}
+                                    <span
+                                        v-if="h.status === 'claimed' && h.mine"
+                                        class="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary"
+                                    >
+                                        Yours
+                                    </span>
+                                </p>
                                 <a
                                     :href="contactHref(h.contact)"
                                     class="inline-flex min-h-8 items-center gap-1.5 break-all underline underline-offset-4 hover:text-primary"

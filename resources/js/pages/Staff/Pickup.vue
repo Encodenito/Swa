@@ -35,7 +35,7 @@ function search() {
 
     <StaffLayout :breadcrumbs="breadcrumbs">
         <div class="px-4 py-6">
-            <h2 class="mb-4 text-xl font-semibold tracking-tight">Pickup counter</h2>
+            <h1 class="mb-4 text-xl font-semibold tracking-tight">Pickup counter</h1>
 
             <form role="search" class="mb-8" @submit.prevent="search">
                 <Label for="pickup-search" class="text-base">Reference code, mobile number or email</Label>

@@ -80,7 +80,7 @@ defineExpose({
 <template>
     <div class="flex min-h-0 flex-1 flex-col">
         <div v-if="sentMessage" class="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center" role="status">
-            <CheckCircle2 class="size-10 text-emerald-600" aria-hidden="true" />
+            <CheckCircle2 class="size-10 text-success" aria-hidden="true" />
             <p class="max-w-xs text-sm">{{ sentMessage }}</p>
             <Button type="button" variant="outline" class="h-10" @click="emit('back')">Back to chat</Button>
         </div>

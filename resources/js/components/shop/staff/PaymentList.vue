@@ -66,7 +66,7 @@ const rows = computed(() => {
             :key="p.id"
             :class="[
                 'rounded-md border p-3 text-sm',
-                nested ? 'ml-4 border-l-4' : '',
+                nested ? 'ml-6' : '',
                 p.status === 'needs_review' || p.status === 'refund_failed'
                     ? 'border-red-400 bg-red-50 dark:border-red-800 dark:bg-red-950/40'
                     : 'border-border',

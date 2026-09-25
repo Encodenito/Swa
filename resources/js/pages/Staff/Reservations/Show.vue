@@ -129,10 +129,10 @@ const timeline = computed(() =>
             <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p class="text-sm text-muted-foreground">{{ isWalkIn ? 'Walk-in sale' : 'Reservation' }}</p>
-                    <h2 class="flex flex-wrap items-center gap-3 font-mono text-2xl font-semibold tracking-tight">
+                    <h1 class="flex flex-wrap items-center gap-3 font-mono text-2xl font-semibold tracking-tight">
                         {{ reservation.reference_code }}
                         <StatusBadge :status="reservation.status" :label="reservation.status_label" class="font-sans" />
-                    </h2>
+                    </h1>
                 </div>
                 <div class="flex flex-col gap-2 sm:flex-row">
                     <Button v-if="isWalkIn" as-child variant="outline">

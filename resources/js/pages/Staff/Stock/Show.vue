@@ -77,7 +77,7 @@ const batchName = (id: number) => `Batch #${id}`;
                     class="size-20 shrink-0 rounded-md border border-border bg-muted object-contain"
                 />
                 <div class="min-w-0 flex-1 space-y-2">
-                    <h2 class="text-xl font-semibold tracking-tight">{{ item.name }}</h2>
+                    <h1 class="text-xl font-semibold tracking-tight">{{ item.name }}</h1>
                     <p v-if="item.brand || item.model || item.category" class="text-sm text-muted-foreground">
                         {{ [item.brand, item.model].filter(Boolean).join(' ') }}<template v-if="item.category"> in {{ item.category }}</template>
                     </p>

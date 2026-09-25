@@ -45,7 +45,7 @@ function lines(n: number): string {
         <div class="px-4 py-6">
             <div class="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div class="space-y-0.5">
-                    <h2 class="text-xl font-semibold tracking-tight">Stock Receiving</h2>
+                    <h1 class="text-xl font-semibold tracking-tight">Stock Receiving</h1>
                     <p class="text-sm text-muted-foreground">
                         Supplier deliveries. Stock only becomes available to customers once a delivery is received.
                     </p>

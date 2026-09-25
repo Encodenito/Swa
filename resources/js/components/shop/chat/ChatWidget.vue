@@ -218,13 +218,13 @@ function onCloseAutoFocus(event: Event) {
                         <ChatBubble v-for="turn in turns" :key="turn.id" :turn="turn" :disabled="sending" @ask="ask" @handoff="startHandoff" />
                         <li v-if="sending" class="flex items-center gap-1 text-muted-foreground">
                             <span class="sr-only">Looking for an answer…</span>
-                            <span class="size-2 animate-bounce rounded-full bg-current motion-reduce:animate-none" aria-hidden="true" />
+                            <span class="size-2 animate-pulse rounded-full bg-current motion-reduce:animate-none" aria-hidden="true" />
                             <span
-                                class="size-2 animate-bounce rounded-full bg-current [animation-delay:150ms] motion-reduce:animate-none"
+                                class="size-2 animate-pulse rounded-full bg-current [animation-delay:150ms] motion-reduce:animate-none"
                                 aria-hidden="true"
                             />
                             <span
-                                class="size-2 animate-bounce rounded-full bg-current [animation-delay:300ms] motion-reduce:animate-none"
+                                class="size-2 animate-pulse rounded-full bg-current [animation-delay:300ms] motion-reduce:animate-none"
                                 aria-hidden="true"
                             />
                         </li>

@@ -70,7 +70,7 @@ function receive() {
         <div class="max-w-4xl px-4 py-6">
             <header class="mb-6 space-y-2 border-b border-border pb-6">
                 <div class="flex flex-wrap items-center gap-3">
-                    <h2 class="text-xl font-semibold tracking-tight">{{ title }}</h2>
+                    <h1 class="text-xl font-semibold tracking-tight">{{ title }}</h1>
                     <DeliveryStatusChip :status="delivery.status" />
                 </div>
                 <dl class="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">

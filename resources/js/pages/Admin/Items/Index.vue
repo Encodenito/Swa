@@ -80,7 +80,7 @@ function remove() {
         <div class="px-4 py-6">
             <div class="mb-6 flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
                 <div class="space-y-0.5">
-                    <h2 class="text-xl font-semibold tracking-tight">Items</h2>
+                    <h1 class="text-xl font-semibold tracking-tight">Items</h1>
                     <p class="text-sm text-muted-foreground">Everything in the catalog, including hidden and removed items.</p>
                 </div>
                 <Button as-child class="shrink-0">

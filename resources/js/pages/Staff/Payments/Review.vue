@@ -223,8 +223,8 @@ function retry() {
             <div v-else class="space-y-8">
                 <section v-for="group in groups" :key="group.kind" :aria-labelledby="`${group.kind}-heading`">
                     <h2 :id="`${group.kind}-heading`" class="flex items-center gap-2 text-lg font-semibold">
-                        <Clock v-if="group.kind === 'stuck'" class="size-5 text-amber-600" aria-hidden="true" />
-                        <AlertTriangle v-else class="size-5 text-red-600" aria-hidden="true" />
+                        <Clock v-if="group.kind === 'stuck'" class="size-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                        <AlertTriangle v-else class="size-5 text-red-600 dark:text-red-400" aria-hidden="true" />
                         {{ group.title }}
                         <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums">{{ group.rows.length }}</span>
                     </h2>
@@ -314,7 +314,7 @@ function retry() {
 
                 <section v-if="orphans.length > 0" aria-labelledby="orphans-heading">
                     <h2 id="orphans-heading" class="flex items-center gap-2 text-lg font-semibold">
-                        <CircleHelp class="size-5 text-red-600" aria-hidden="true" />
+                        <CircleHelp class="size-5 text-red-600 dark:text-red-400" aria-hidden="true" />
                         Payments for an unknown reservation
                         <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold tabular-nums">{{ orphans.length }}</span>
                     </h2>
